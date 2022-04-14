@@ -1,0 +1,57 @@
+---
+title: "Intial_Investigation"
+author: "Stryder Coleman"
+date: "April 14, 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Intial Investigation
+
+
+
+Libraries
+```{r libraries}
+
+library(tidyverse)
+library(caret)
+
+```
+Data Imports
+```{r import, include=FALSE}
+
+Summary_Basket_2019 <- read_csv("Summary_Basket_2019.csv")
+Summary_Basket_2020 <- read_csv("Summary_Basket_2020.csv")
+Summary_Basket_2021 <- read_csv("Summary_Basket_2021.csv")
+UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
+UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
+
+
+```
+
+#Investigate Summary_Basket_2019
+```{r}
+  #view(Summary_Basket_2019)
+  filter(Summary_Basket_2019,Summary_Basket_2019$Online == 1)
+  OnlineVStore_2019 <- Summary_Basket_2019 %>% count(Online)
+
+```
+
+#Investigate Summary_Basket_2020
+```{r}
+  #view(Summary_Basket_2020)
+  filter(Summary_Basket_2020,Summary_Basket_2020$Online == 1)
+  OnlineVStore_2020 <- Summary_Basket_2020 %>% count(Online)
+
+```
+
+#Investigate Summary_Basket_2021
+```{r}
+  #view(Summary_Basket_2021)
+  filter(Summary_Basket_2021,Summary_Basket_2021$Online == 1)
+  OnlineVStore_2021 <- Summary_Basket_2021 %>% count(Online)
+
+```
