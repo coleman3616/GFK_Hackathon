@@ -51,7 +51,20 @@ UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
 #Investigate Summary_Basket_2021
 ```{r}
   #view(Summary_Basket_2021)
-  filter(Summary_Basket_2021,Summary_Basket_2021$Online == 1)
+  filter(Summary_Basket_2021,Summary_Basket_2021$Online == 1) 
+    %>% rename()
   OnlineVStore_2021 <- Summary_Basket_2021 %>% count(Online)
+  
 
 ```
+
+
+Joining 
+```{r}
+  
+  OvR <- left_join(x = OnlineVStore_2019, y = OnlineVStore_2020, by = "Online")
+  OvR <- left_join(x=OvR, y = OnlineVStore_2021, by = "Online")
+  OvR <- rename_all()
+
+```
+
