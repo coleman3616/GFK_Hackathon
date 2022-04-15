@@ -349,10 +349,6 @@ UPC_Hack_Cereal2 %>%
 ```
 * UPC Values are all the same for every store and Every UPC value is shown once
 per store
-```{r}
-UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
-UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
-```
 
 
 ```{r }
