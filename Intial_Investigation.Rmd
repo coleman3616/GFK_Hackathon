@@ -4,7 +4,6 @@ author: "Stryder Coleman"
 date: "April 14, 2022"
 output: html_document
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -29,6 +28,77 @@ Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
 Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
 
 ```
+
+#functions
+
+```{r barvar}
+#Count the amount occurrences of an attribute
+#Index: which attribute
+#data: the data set
+barVar <- function(data, index = 0) {
+    library("tidyverse")
+    library("ggpubr")
+  
+    final_plot = NULL
+    #index == 0: plot all attribute counts and combine
+    if (index == 0) {
+      plots <- vector(mode = "list", length = ncol(data))
+      #for each attribute
+      for(i in 1:ncol(data)) {
+        
+        #Count occurences
+        temp <- data %>%
+        count(.[, i]) %>%
+          rename("x" = names(.[1]))
+
+        #plot the occurences
+        plots[[i]] <- ggplot(temp,aes(y = n, x = x)) +
+        geom_bar(stat = "identity", aes(fill = n)) + 
+        theme (axis.text.x = element_text (angle = 45, vjust = 1, hjust=1), 
+               legend.position="none") + xlab(names(data[i]))
+                
+      }
+      final_plot <- ggarrange(plotlist = plots, labels = c(1:ncol(data)))
+      #index > 0: plot a single attribute count(based on index)
+    } else if(index > 0) {
+      
+        
+          #count Occurences
+          temp <- data %>%
+          count(.[, index])  %>%
+            rename("x" = names(.[1]))
+      
+          #plot the occurences
+          final_plot <- #ggplot(temp, aes(y = n,x = names(data[index]))) +
+          ggplot(temp, aes(y = n,x = reorder(x,n))) +
+          geom_bar(stat = "identity", aes(fill = n)) + 
+          theme (axis.text.x = element_text (angle = 45, vjust = 1, hjust=1)) +
+            xlab(names(data[index]))
+    }
+    
+    final_plot
+}
+```
+
+```{r countNA}
+countNA <- function(data, graph = FALSE) {
+  temp <- tibble(Name = names(data), naAmount = 0)
+  for (i in 1:nrow(temp)) {
+  temp[i, 2] = sum(is.na(data[i]))
+  }
+  if(graph == TRUE) {
+    ggplot(temp,aes(y = naAmount, x = reorder(Name,-naAmount))) +
+    geom_bar(stat = "identity") + 
+    theme(axis.text.x = element_text (angle = 45, vjust = 1, hjust=1)) +
+      xlab("Attributes")
+  } else {
+    temp %>%
+      arrange(desc(naAmount))
+  }
+}
+```
+
+
 
 #Remove empty rows
 ```{r remove_empty_rows}
