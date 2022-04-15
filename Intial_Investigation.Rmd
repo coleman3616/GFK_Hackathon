@@ -15,6 +15,7 @@ Libraries
 library(readxl)
 library(tidyverse)
 library(caret)
+library(dplyr)
 ```
 Data Imports
 ```{r import, include=FALSE}
@@ -30,7 +31,6 @@ Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
 ```
 
 #functions
-
 ```{r barvar}
 #Count the amount occurrences of an attribute
 #Index: which attribute
@@ -98,6 +98,79 @@ countNA <- function(data, graph = FALSE) {
 }
 ```
 
+```{r turkeyOutliers}
+turkeyOutliers <- function(data, index, filter_out = TRUE) {
+  raw_data <- data[index] %>%
+    unlist() %>%
+    as.vector()
+  
+  thirdQ <- quantile(raw_data, 3/4)
+  firstQ <- quantile(raw_data, 1/4)
+  upper <- thirdQ + (1.5 * IQR(raw_data))
+  lower <- firstQ - (1.5 * IQR(raw_data))
+  
+  if(filter_out) {
+    data %>%
+    filter(data[index] < lower | data[index] > upper)
+  } else {
+    data %>%
+    filter(data[index] >= lower & data[index] <= upper)
+  }
+      
+}
+
+
+```
+
+
+# The Investigate function creates three tibbles containing the statistics, the number of outliers per column, and the number of NAs per column
+
+```{r investiongation} 
+Investigate <- function(.data, name1, name2, name3)
+  {
+    numbers <- c()
+    names1 <- c()
+    for(i in 1:length(.data))
+    {
+      # Finding numeric columns
+      if(is.numeric(.data[[i]]) == TRUE) # Iterates through entire df, column by column
+      {
+        # Stats section
+        names <- append(names, colnames(.data[i])) # getting the names of numeric columns
+        mean <- append(mean, mean(.data[[i]], na.rm = TRUE))
+        sd <- append(sd, sd(.data[[i]], na.rm = TRUE))
+        max <- append(max, max(.data[[i]], na.rm = TRUE))
+        min <- append(min, min(.data[[i]], na.rm = TRUE))
+        median <- append(median, median(.data[[i]], na.rm = TRUE))
+        # Add more stats here
+        
+        # Finding columns with outliers
+        if(length(boxplot.stats(.data[[i]])$out) > 0)
+        {
+          numbers <- append(numbers, i) 
+          names1 <- append(names1, colnames(.data[i])) # collecting the column names of columns containing outliers
+        }
+      }
+    }
+      Stats <- tibble(names, mean, median, sd, max, min) # Creating stats data frame
+      Stats <- Stats[-1,] # removing junk first row
+      view(Stats, title = toString(paste(name1, "Stats", sep = "_"))) # Viewing and renaming table
+      NaN_count <- map(.data, ~sum(is.nan(.)))
+      na_count <- map(.data, ~sum(is.na(.))) # Counting nas
+      names <- as.list(colnames(.data)) #Finding col_names
+      unique <- map(.data, ~length(unique(.))) # Finding unique value counts
+      Incomplete_data <- tibble(names, na_count, NaN_count, unique) %>%
+      arrange(desc(na_count)) # Creating table and organizing it
+      view(Incomplete_data, title = toString(paste(name1, "Incomplete_Data", sep = "_"))) # Renaming table and viewing it
+      
+      outliers <- subset(.data, select = numbers) # Selecting rows that are numeric and contain outliers
+      outliers <- map(outliers, ~length(boxplot.stats(.)$out)) # finding count of outliers in each column
+      Outliers <- tibble(names1, outliers) %>% 
+      rename(names = names1) # Creating table 
+      view(Outliers, title = toString(paste(name1, "Outliers", sep = "_"))) # Viewing table and renaming it
+  }
+```
+
 
 
 #Remove empty rows
@@ -160,4 +233,23 @@ Joining
   OvR
 
 ```
+
+
+```{r}
+#Investigate(HackDataMaps, "output1","output2","output3")
+Investigate(Summary_Basket_2019, "sum2019","sum2019","sum2019")
+Investigate(Summary_Basket_2020, "sum2020","sum2020","sum2020")
+Investigate(Summary_Basket_2021, "sum2021","sum2021","sum2021")
+```
+
+```{r}
+
+
+
+
+```
+
+
+
+
 
