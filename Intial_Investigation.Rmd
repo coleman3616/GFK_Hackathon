@@ -332,7 +332,6 @@ Joining
 Summary_Basket_2019 %>%
 ggplot(aes(y = totdol, x = totqty)) +
   geom_point()
-
 ```
 
 * We can see a visible linear relation for totdol and totqty. as the quantity 
@@ -349,7 +348,6 @@ Summary_Basket_2019 %>%
   summarise(mean_totqty = mean(totqty),mean_totdol = mean(totdol)) %>%
   ggplot(aes(y = mean_totdol, x = mean_totqty)) +
   geom_point()
-
 ```
 
 * This visualization shows the average quantity bought and average dollar spent per
