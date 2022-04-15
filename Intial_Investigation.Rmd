@@ -180,6 +180,77 @@ Investigate <- function(.data, name1, name2, name3)
   }
 ```
 
+```{r UPC Analyzer}
+upcAnalyze <- function(upc_select, combine = FALSE)  {
+  library("tidyverse")
+  library("ggpubr")
+  if(!exists("full_UPC")&& class(full_UPC$date) != "Date") {
+    full_UPC <- rbind(UPC_Hack_Cereal2,UPC_Hack_Cleaners2)
+    full_UPC <- full_UPC %>% 
+      mutate(date = as.Date(str_c("20",date)))
+  }
+  Individual_UPC <- full_UPC %>% #Get the individual Item
+    filter(upc == upc_select)
+  
+  Stores_Bought_From <-unique(Individual_UPC$Store) %>% #get all stores that the item was bought at
+    sort()
+  
+  Most_Common_Store <- Individual_UPC %>%  #Find the most common store the item is bought at
+    count(Store) %>% 
+    filter(n == max(n))
+  
+  Average_Units_Bought <- Individual_UPC%>%  #get the average quantity bought of the item
+    summarise(mean = mean(qty))
+  
+  Mean_Dollars_Spent <- Individual_UPC %>%  #get the average price spent of the item
+    summarise(mean = mean(price))
+  
+  
+  Price_Of_Item <- Individual_UPC %>%
+    ggplot(aes(y = price, x = date)) +
+    geom_point() +
+    ggtitle("price of item")
+
+  Average_Price_Of_Item <- Individual_UPC %>%
+    group_by(date) %>%
+    summarise(mean_price = mean(price), average_qty = mean(qty)) %>%
+    ggplot(aes(y = mean_price, x = date, color = average_qty)) +
+    ylab("Average Price") +
+    labs(color='Average Quantity') +
+    geom_point() +
+    ggtitle("Average price of item")
+
+  distribution <- Individual_UPC %>%
+    ggplot(aes(x = price)) +
+    geom_boxplot() +
+    ggtitle("Distribution")
+
+  if (combine == FALSE) {
+    print(Price_Of_Item)
+    print(Average_Price_Of_Item)
+    print(distribution)
+  } else {
+    ggarrange(Price_Of_Item, Average_Price_Of_Item,distribution) %>%
+      print()
+  }
+  paste_data <- 
+  paste(
+    "Stores bought from: ", paste(Stores_Bought_From, collapse = ', ') %>% 
+      as.character(), "\n",
+    "Most Common Store Bought From: ", paste(Most_Common_Store, collapse = ', ') %>%
+    as.character(), "\n",
+    "Average Units Bought: ", Average_Units_Bought  %>%
+    as.character(), "\n",
+    "Average Dollars Spent on product: ", Mean_Dollars_Spent  %>%
+    as.character(), "\n")
+  writeLines(paste_data)
+}
+```
+
+
+```{r}
+
+```
 
 
 #Remove empty rows
@@ -351,39 +422,6 @@ UPC_Hack_Cereal2 %>%
 per store
 
 
-```{r }
-
-upc_select = 1600015087
-
- 
-  
-
-full_UPC <- rbind(UPC_Hack_Cereal2,UPC_Hack_Cleaners2)
-if(class(full_UPC$date) != "Date") {
-  full_UPC <- full_UPC %>% 
-    mutate(date = as.Date(str_c("20",date)))
-}
-full_UPC %>%
-  filter(upc == upc_select) %>%
-  group_by(date) %>%
-  mutate(date = as.Date(date)) %>%
-  #summarise(price = price) %>%
-  ggplot(aes(y = price, x = date, color = Store)) +
-  geom_point()
-
-
-  
-  
-  #mean_unitsbought
-  #mean_dollarsSpent
-  #Stores_Bought_From
-  #most_Store_Bought_From
-  
-  
-
-
-
-```
 
 
 
