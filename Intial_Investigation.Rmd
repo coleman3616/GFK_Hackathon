@@ -99,6 +99,14 @@ countNA <- function(data, graph = FALSE) {
 ```
 
 ```{r turkeyOutliers}
+# This does the same things as Stryder's Investigate function for outlier's, 
+#I just wanted to extract the specific outliers in a table
+#------------------------------------------------------------------------------#
+#Data: what data to enter
+#index: the specific attribute to find outliers for
+#Filter_out = TRUE: TRUE = only display non outlying data, 
+#                   FALSE = only display outlying data
+
 turkeyOutliers <- function(data, index, filter_out = TRUE) {
   raw_data <- data[index] %>%
     unlist() %>%
@@ -237,19 +245,78 @@ Joining
 
 ```{r}
 #Investigate(HackDataMaps, "output1","output2","output3")
-Investigate(Summary_Basket_2019, "sum2019","sum2019","sum2019")
-Investigate(Summary_Basket_2020, "sum2020","sum2020","sum2020")
-Investigate(Summary_Basket_2021, "sum2021","sum2021","sum2021")
+#Investigate(Summary_Basket_2019, "sum2019","sum2019","sum2019")
+#Investigate(Summary_Basket_2020, "sum2020","sum2020","sum2020")
+#Investigate(Summary_Basket_2021, "sum2021","sum2021","sum2021")
 ```
 
-```{r}
+# Visualization
 
 
-
+## Summary Baskets Exploration
+```{r totdol_vs_totqty_Summary_Basket_2019}
+Summary_Basket_2019 %>%
+ggplot(aes(y = totdol, x = totqty)) +
+  geom_point()
 
 ```
 
+* We can see a visible linear relation for totdol and totqty. as the quantity 
+bought of a product increases, the total cost of the transaction increase. 
 
+* The visible grouping of points in between x = 0 and x = 500 is most likely due
+to shopping behavior where shoppers will buy more of a product if it costs less
+or if there is a sale on the product.
+
+
+```{r mean_totdol_vs_totqty_byCustomer_Summary_Basket_2019_}
+Summary_Basket_2019 %>%
+  group_by(HHID,Store) %>%
+  summarise(mean_totqty = mean(totqty),mean_totdol = mean(totdol)) %>%
+  ggplot(aes(y = mean_totdol, x = mean_totqty)) +
+  geom_point()
+
+```
+
+* This visualization shows the average quantity bought and average dollar spent per
+household. The Visible vertical line of points around x = 0 most likely are expensive
+shoppers. These shoppers buy few but expensive products. On the side with points around
+y = 0, the shoppers are most likely since they buy a lot of products at a very low price.
+In between, these shoppers are the typical shopper where they will spend more if they
+buy more or spend less if they buy less. This trend stops at around y = 1600, x = 270.
+I believe this is because the typical shopper will not buy more than this amount
+and buy more than this amount of product. 
+
+* Tried to see if Store had any correlation with a shoppers spending and found 
+no correlation
+
+```{r mean_totdol_vs_totqty_byStore_Summary_Basket_2019_}
+Summary_Basket_2019 %>%
+  group_by(Store) %>%
+  summarise(mean_totqty = mean(totqty),mean_totdol = mean(totdol)) %>%
+  ggplot(aes(y = mean_totdol, x = mean_totqty, color = Store)) +
+  geom_point()
+
+```
+
+* This visualization shows two main groups around x = 0,x = 18 and x = 40, x= 55
+The left most group are most likely less successful stores since the average 
+quantity bought and average dollars spent is less. Meanwhile, for the other group,
+these stores were able to convince their costumers to spend more and buy more quantity
+at their stores
+
+```{r sum_totdol_vs_totqty_byStore_Summary_Basket_2019_}
+Summary_Basket_2019 %>%
+  group_by(Store) %>%
+  summarise(sum_totqty = sum(totqty),sum_totdol = sum(totdol)) %>%
+  ggplot(aes(y = sum_totdol, x = sum_totqty, color = Store)) +
+  geom_point()
+
+```
+* This visualization shows the total dollars spent in a specific store vs
+the total quantity. As one may expect, as the stores' totalqty increases
+so does the stores' totaldol. The stores lower left of the visualization are
+less popular stores while the stores in the top right are more popular
 
 
 
