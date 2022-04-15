@@ -11,25 +11,42 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #Intial Investigation
 
-
-
 Libraries
 ```{r libraries}
-
+library(readxl)
 library(tidyverse)
 library(caret)
-
 ```
 Data Imports
 ```{r import, include=FALSE}
-
 Summary_Basket_2019 <- read_csv("Summary_Basket_2019.csv")
 Summary_Basket_2020 <- read_csv("Summary_Basket_2020.csv")
 Summary_Basket_2021 <- read_csv("Summary_Basket_2021.csv")
 UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
 UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
+Shopper_Tabs1 <- read_excel("Shopper_Tabs_1.xlsx")
+Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
+Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
 
+```
 
+#Remove empty rows
+```{r remove_empty_rows}
+remove_empty_rows <- function(.source) {
+  empty_rows <- apply(.source, 1, function(.source) all(is.na(.source)))
+  cleaned <- .source[!empty_rows,]
+  return(cleaned)
+}
+```
+
+#Clean excel imported data
+```{r}
+Shopper_Tabs1 <- remove_empty_rows(Shopper_Tabs1)
+Shopper_Tabs2 <- remove_empty_rows(Shopper_Tabs2)
+Shopper_Tabs3 <- remove_empty_rows(Shopper_Tabs3)
+view(Shopper_Tabs1)
+view(Shopper_Tabs2)
+view(Shopper_Tabs3)
 ```
 
 #Investigate Summary_Basket_2019
@@ -70,6 +87,7 @@ Joining
   
   OvR <- OvR %>%
     rename_with(~ newnames, all_of(oldnames))
+  OvR
 
 ```
 
