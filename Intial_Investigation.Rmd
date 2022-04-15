@@ -184,8 +184,10 @@ Investigate <- function(.data, name1, name2, name3)
 upcAnalyze <- function(upc_select, combine = FALSE)  {
   library("tidyverse")
   library("ggpubr")
-  if(!exists("full_UPC")&& class(full_UPC$date) != "Date") {
-    full_UPC <- rbind(UPC_Hack_Cereal2,UPC_Hack_Cleaners2)
+  if(!exists("full_UPC")) {
+    .GlobalEnv$full_UPC <- rbind(UPC_Hack_Cereal2,UPC_Hack_Cleaners2)
+  }
+  if(class(full_UPC$date) != "Date") {
     full_UPC <- full_UPC %>% 
       mutate(date = as.Date(str_c("20",date)))
   }
@@ -418,10 +420,20 @@ UPC_Hack_Cereal2 %>%
   group_by(Store)%>%
   nrow()
 ```
-* UPC Values are all the same for every store and Every UPC value is shown once
-per store
+* UPC Values are all the same for every store 
 
+```{r}
+  UPC_Hack_Cereal2 %>% 
+  group_by(upc) %>%  
+  summarise(mean = mean(qty)) %>% 
+  arrange(desc(mean))
+  
+  upcAnalyze(1980070251, combine = FALSE)
+  #upcAnalyze(3997800364, combine = TRUE)
+  #upcAnalyze(1600027526, combine = FALSE)
+```
 
+* Demonstrating UPC Analyzer
 
 
 
