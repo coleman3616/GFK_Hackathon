@@ -16,6 +16,7 @@ library(readxl)
 library(tidyverse)
 library(caret)
 library(dplyr)
+library(stringr)
 ```
 Data Imports
 ```{r import, include=FALSE}
@@ -294,9 +295,8 @@ no correlation
 Summary_Basket_2019 %>%
   group_by(Store) %>%
   summarise(mean_totqty = mean(totqty),mean_totdol = mean(totdol)) %>%
-  ggplot(aes(y = mean_totdol, x = mean_totqty, color = Store)) +
+  ggplot(aes(y = mean_totdol, x = mean_totqty)) +
   geom_point()
-
 ```
 
 * This visualization shows two main groups around x = 0,x = 18 and x = 40, x= 55
@@ -317,6 +317,77 @@ Summary_Basket_2019 %>%
 the total quantity. As one may expect, as the stores' totalqty increases
 so does the stores' totaldol. The stores lower left of the visualization are
 less popular stores while the stores in the top right are more popular
+
+## UPC Data Exploration
+
+```{r Store Count}
+UPC_Hack_Cereal2 %>%
+  barVar(index = 2)
+
+UPC_Hack_Cereal2 %>%
+  count(Store) %>%
+  arrange(desc(n))
+
+UPC_Hack_Cleaners2 %>%
+  barVar(index = 2)
+ 
+UPC_Hack_Cleaners2 %>%
+  count(Store) %>%
+  arrange(desc(n))
+
+```
+* Store 15 and Store 17 are the stores with most data available
+
+```{r UPC values}
+UPC_Hack_Cereal2 %>%
+  group_by(upc)%>%
+  nrow()
+
+UPC_Hack_Cereal2 %>%
+  group_by(Store)%>%
+  nrow()
+```
+* UPC Values are all the same for every store and Every UPC value is shown once
+per store
+```{r}
+UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
+UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
+```
+
+
+```{r }
+
+upc_select = 1600015087
+
+ 
+  
+
+full_UPC <- rbind(UPC_Hack_Cereal2,UPC_Hack_Cleaners2)
+if(class(full_UPC$date) != "Date") {
+  full_UPC <- full_UPC %>% 
+    mutate(date = as.Date(str_c("20",date)))
+}
+full_UPC %>%
+  filter(upc == upc_select) %>%
+  group_by(date) %>%
+  mutate(date = as.Date(date)) %>%
+  #summarise(price = price) %>%
+  ggplot(aes(y = price, x = date, color = Store)) +
+  geom_point()
+
+
+  
+  
+  #mean_unitsbought
+  #mean_dollarsSpent
+  #Stores_Bought_From
+  #most_Store_Bought_From
+  
+  
+
+
+
+```
 
 
 
