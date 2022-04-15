@@ -17,6 +17,7 @@ library(tidyverse)
 library(caret)
 library(dplyr)
 library(stringr)
+library(knitr)
 ```
 Data Imports
 ```{r import, include=FALSE}
@@ -28,7 +29,7 @@ UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
 Shopper_Tabs1 <- read_excel("Shopper_Tabs_1.xlsx")
 Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
 Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
-
+Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
 ```
 
 #functions
@@ -254,6 +255,11 @@ upcAnalyze <- function(upc_select, combine = FALSE)  {
 
 ```
 
+#Convert number to %
+```{r convert_to_percent}
+percent <- function(x, digits = 2, format = "f", ...) {
+	paste0(formatC(x * 100, format = format, digits = digits, ...), "%")}
+```
 
 #Remove empty rows
 ```{r remove_empty_rows}
@@ -433,5 +439,43 @@ UPC_Hack_Cereal2 %>%
 
 * Demonstrating UPC Analyzer
 
+```{r Online_vs_Offline_byUPC_Hack_Cereal2_}
+tmp <- UPC_Hack_Cereal2 %>% 
+     group_by(Online) %>% 
+     summarize(count = n()) %>%
+     top_n(10, wt = count) %>%
+     arrange(desc(count)) %>%
+     mutate(Online = as.factor(Online)) %>%
+     mutate(propotion = count/sum(count))
+kable(tmp)
+
+tmp %>% 
+     ggplot(aes(x=Online,y=propotion,fill=Online))+
+     geom_text(aes(label=percent(propotion)), vjust=-0.2)+
+     geom_bar(stat="identity")
+```
+
+* Majority prefer to buy cereal in store (~93%)
+
+```{r top_Cereal_Brand_byUPC_Hack_Cereal2_}
+tmp2 <- UPC_Hack_Cereal2 %>% 
+	group_by(upc) %>% 
+	summarize(count = n()) %>% 
+	top_n(10, wt = count) %>%
+	mutate(propotion = count/sum(count)) %>%
+	left_join(Hackathon_Data_Maps, by="upc") %>%
+	select("upc", "count", "Parent Brand", "Brand") %>%
+	arrange(desc(count)) 
+
+kable(tmp2)
+
+tmp2 %>% 
+  ggplot(aes(x=reorder(Brand,-propotion), y=propotion))+
+  geom_bar(stat="identity",fill="red")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+```
+* Analyze top products in Cereal
+Top parent brands: Kellogg, Big G
+Most favorite brand: Cheerios (>50%)
 
 
