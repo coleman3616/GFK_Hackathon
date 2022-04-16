@@ -62,30 +62,181 @@ get_data <- function(.data, key) {
     j <- j-1
     new_data <- .data[j:nrow(.data), 1:ncol(.data)] # Create subset of data that only contains a single table from the original excel.
     found <- FALSE
+  } 
+  if (!exists("new_data")) {
+    for (a in 1:nrow(.data)) {
+      if (grepl(pattern="Demographic.*", .data[a, 1])) { # Check for next occurance of 'Demographic'
+        new_data <- .data[1:a-1, 1:ncol(.data)] # Create subset of data that only contains a single table from the original excel.
+        break
+      }
+    }
+    names(new_data)[2] <- new_data[1,2]
+    names(new_data)[3:ncol(new_data)] <- new_data[2, 3:ncol(new_data)]
+    new_data <- new_data[3:nrow(new_data),]
+  } else {
+    names(new_data)[1] <- new_data[1,1]
+    names(new_data)[2] <- new_data[2,2]
+    names(new_data)[3:ncol(new_data)] <- new_data[3, 3:ncol(new_data)]
+    new_data <- new_data[4:nrow(new_data),]
   }
   return(new_data)
 }
 ```
-*Now we can look at the specific table by specifying a keyword to find said table.
+*Now we can look at the specific table by specifying a keyword to find said table. If failed, returns first table found in data passed; to overcome, give more specific key term for table.
 
 ## Start here!
-```{r clean data}
+```{r initialize data}
 #Clean excel imported data
 Shopper_Tabs1 <- remove_empty_rows(Shopper_Tabs1)
 Shopper_Tabs2 <- remove_empty_rows(Shopper_Tabs2)
 Shopper_Tabs3 <- remove_empty_rows(Shopper_Tabs3)
 
-view(Shopper_Tabs1)
-view(Shopper_Tabs2)
-view(Shopper_Tabs3)
+# This section generates the individual tables for shopper_tabs1
+s1_past_six_months <- get_data(Shopper_Tabs1, "past 6 months")
+s1_mobile_devices <- get_data(Shopper_Tabs1, "Smartphones")
+s1_household_washing <- get_data(Shopper_Tabs1, "Household washing")
+s1_haircare <- get_data(Shopper_Tabs1, "Haircare")
+s1_skincare <- get_data(Shopper_Tabs1, "Skincare")
+s1_cosmetics <- get_data(Shopper_Tabs1, "Make-up, cosmetics")
+s1_packaged_food <- get_data(Shopper_Tabs1, "Packaged food")
+s1_toys <- get_data(Shopper_Tabs1, "Toys")
+s1_small_home_appliances <- get_data(Shopper_Tabs1, "Small home appliances")
+s1_fashion <- get_data(Shopper_Tabs1, "Clothing/fashion")
+s1_healthcare <- get_data(Shopper_Tabs1, "OTC healthcare")
+s1_major_home_appliances <- get_data(Shopper_Tabs1, "Major home appliances")
+s1_replacement_auto <- get_data(Shopper_Tabs1, "Replacement auto")
+s1_streaming <- get_data(Shopper_Tabs1, "Streaming")
+s1_wearables <- get_data(Shopper_Tabs1, "Wearables")
+s1_computing <- get_data(Shopper_Tabs1, "Computing")
+s1_home_furnishings <- get_data(Shopper_Tabs1, "furnishings")
+
+# This section generates the individual tables for shopper_tabs2
+s2_smartphones <- get_data(Shopper_Tabs2, "Smartphones")
+s2_household_washing <- get_data(Shopper_Tabs2, "Household washing")
+s2_haircare <- get_data(Shopper_Tabs2, "Haircare")
+s2_skincare <- get_data(Shopper_Tabs2, "Skincare")
+s2_cosmetics <- get_data(Shopper_Tabs2, "Make-up")
+s2_packaged_food <- get_data(Shopper_Tabs2, "Packaged food")
+s2_toys <- get_data(Shopper_Tabs2, "Toys")
+s2_small_home_appliances <- get_data(Shopper_Tabs2, "Small home appliances")
+s2_fashion <- get_data(Shopper_Tabs2, "Clothing")
+s2_major_home_appliances <- get_data(Shopper_Tabs2, "Major home appliances")
+s2_replacement_auto <- get_data(Shopper_Tabs2, "Replacement auto")
+s2_streaming <- get_data(Shopper_Tabs2, "Streaming")
+s2_wearables <- get_data(Shopper_Tabs2, "Wearables")
+s2_computing <- get_data(Shopper_Tabs2, "Computing")
+s2_furnishing <- get_data(Shopper_Tabs2, "Home furnishings")
+s2_in_store_factors <- get_data(Shopper_Tabs2, "FB_08a")
+s2_online_factors <- get_data(Shopper_Tabs2, "FB_08b")
+
+# This section generates the individual tables for shopper_tabs3
+s3_gsa_summary_top2 <- get_data(Shopper_Tabs3, "Summary Top 2 Box")
+s3_nbt_summary_hd_wc <- get_data(Shopper_Tabs3, "Have already done it and will likely continue")
+s3_sms_general <- get_data(Shopper_Tabs3, "FBS_1 - Social Media Shopping")
+s3_sms_why_not <- get_data(Shopper_Tabs3, "FBS_1a")
+s3_sms_attitudes_top2 <- get_data(Shopper_Tabs3, "FBS_2 - Social Media Shopping.*Top 2 Box")
+s3_sms_attitudes_bot2 <- get_data(Shopper_Tabs3, "FBS_2 - Social Media Shopping.*Bottom 2 Box")
+s3_sms_attitudes_fun <- get_data(Shopper_Tabs3, "Shopping on social media networks is fun")
+s3_sms_attitudes_uncomfortable <- get_data(Shopper_Tabs3, "I feel uncomfortable with the current amount of advertising I see on social media networks")
+s3_sms_attitudes_targeted <- get_data(Shopper_Tabs3, "On my social media networks I get targeted with the best products for me")
+s3_sms_attitudes_nfm <- get_data(Shopper_Tabs3, "Shopping on sicial media networks is not for someone like me")
+s3_sms_attitudes_conveniences <- get_data(Shopper_Tabs3, "networks is convenient")
+s3_nbt_summary_hd_wnc <- get_data(Shopper_Tabs3, "Have already done it and will not likely continue")
+s3_nbt_summary_hn_wn <- get_data(Shopper_Tabs3, "Have not done it and will not")
+s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
 ```
-*Run this to clean and build workable chunks of data for investigation.
+*This gets the initial cleaned data for the shopper tab data and then generates the individual tibbles to be able to work with.
 
-# Testing
-```{r testing}
+## view all data and generated data
+```{r view_data}
 
-data_shopper <- get_data(Shopper_Tabs1, "furnishings")
+# Initial data after being cleaned
+#view(Shopper_Tabs1)
+#view(Shopper_Tabs2)
+#view(Shopper_Tabs3)
 
-view(data_shopper)
+# Check first, mid, last of shopper_tabs1
+#view(s1_past_six_months)
+#view(s1_mobile_devices)
+#view(s1_household_washing)
+#view(s1_haircare)
+#view(s1_skincare)
+#view(s1_cosmetics)
+#view(s1_packaged_food)
+#view(s1_toys)
+#view(s1_small_home_appliances)
+#view(s1_fashion)
+#view(s1_healthcare)
+#view(s1_major_home_appliances)
+#view(s1_replacement_auto)
+#view(s1_streaming)
+#view(s1_wearables)
+#view(s1_computing)
+#view(s1_home_furnishings)
+
+# Check first, mid, last of shopper_tabs2
+#view(s2_smartphones)
+#view(s2_household_washing)
+#view(s2_haircare)
+#view(s2_skincare)
+#view(s2_cosmetics)
+#view(s2_packaged_food)
+#view(s2_toys)
+#view(s2_small_home_appliances)
+#view(s2_fashion)
+#view(s2_major_home_appliances)
+#view(s2_replacement_auto)
+#view(s2_streaming)
+#view(s2_wearables)
+#view(s2_computing)
+#view(s2_furnishing)
+#view(s2_in_store_factors)
+#view(s2_online_factors)
+
+# Check first, mid, last of shopper_tabs3
+#view(s3_gsa_summary_top2)
+#view(s3_nbt_summary_hd_wc)
+#view(s3_sms_general)
+#view(s3_sms_why_not)
+#view(s3_sms_attitudes_top2)
+#view(s3_sms_attitudes_bot2)
+#view(s3_sms_attitudes_fun)
+#view(s3_sms_attitudes_uncomfortable)
+#view(s3_sms_attitudes_targeted)
+#view(s3_sms_attitudes_nfm)
+#view(s3_sms_attitudes_conveniences)
+#view(s3_nbt_summary_hd_wnc)
+#view(s3_nbt_summary_hn_wn)
+#view(s3_gsa_summary_bot2)
+
+```
+*Create views for any/all initialized data in this Rmd file.
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Initial_Investigation
+
+##Shopper_tabs1
+```{r investigate_shopper_tabs1}
+
+```
+
+##Shopper_tabs2
+```{r investigate_shopper_tabs2}
+
+```
+
+##Shopper_tabs3
+```{r investigate_shopper_tabs3}
 
 ```
