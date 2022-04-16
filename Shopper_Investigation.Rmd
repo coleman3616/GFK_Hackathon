@@ -34,26 +34,39 @@ Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
 ## Remove empty rows.
 ```{r remove_empty_rows}
 remove_empty_rows <- function(.source) {
-  empty_rows <- apply(.source, 1, function(.source) all(is.na(.source)))
-  cleaned <- .source[!empty_rows,]
+  empty_rows <- apply(.source, 1, function(.source) all(is.na(.source))) # Check each row for any rows that contain only na's.
+  cleaned <- .source[!empty_rows,] # Keep everything but the empty rows.
+  cleaned <- subset(cleaned, select = -c(2)) # Remove the percentage down column.
   return(cleaned)
 }
 ```
-*First step is to clear the empty rows after initial imports.
+*First step is to clear the empty rows after initial imports and then remove the percentage down column since it is constant for all data.
 
-##Break down data. (WIP)
-```{r gen_chunked_data}
-gen_chunked_data <- function(.data) {
-  j <- 1
-  for(i in 1:nrow(.data)) {
-    if (grepl(pattern="Demographic.*", .data[i, 1])) {
-      print("Pattern found")
+##Look at a specific set of data. (WIP)
+```{r get_data}
+get_data <- function(.data, key) {
+  found <- FALSE
+  key_pattern <- paste("Demographic.*", key) # Look for row containing 'Demographic' followed by the key string we are looking for
+  for(i in 1:nrow(.data)) { 
+    if (grepl(pattern=key_pattern, .data [i, 1])) { # Check if current row has key_pattern matched.
+      found <- TRUE # Set key pattern found and look for the end of this chunk.
+      j <- i+1 # Set begginning position of this chunk.
+      i <- i+1 # Skip next check since pattern found at this row.
     }
+    if (grepl(pattern="Demographic.*", .data[i, 1]) && found) { # Check for next occurance of 'Demographic'
+      new_data <- .data[j:i-1, 1:ncol(.data)] # Create subset of data that only contains a single table from the original excel.
+      found <- FALSE
+    }
+  }
+  if (found) { # If key pattern found and no other occurance of 'Demographic' set i to end of .data
+    j <- j-1
+    new_data <- .data[j:nrow(.data), 1:ncol(.data)] # Create subset of data that only contains a single table from the original excel.
+    found <- FALSE
   }
   return(new_data)
 }
 ```
-*Now we want to break up the separate tables into subsets of data.
+*Now we can look at the specific table by specifying a keyword to find said table.
 
 ## Start here!
 ```{r clean data}
@@ -61,8 +74,6 @@ gen_chunked_data <- function(.data) {
 Shopper_Tabs1 <- remove_empty_rows(Shopper_Tabs1)
 Shopper_Tabs2 <- remove_empty_rows(Shopper_Tabs2)
 Shopper_Tabs3 <- remove_empty_rows(Shopper_Tabs3)
-
-Shopper_data1 <- gen_chunked_data(Shopper_Tabs1)
 
 view(Shopper_Tabs1)
 view(Shopper_Tabs2)
@@ -73,19 +84,8 @@ view(Shopper_Tabs3)
 # Testing
 ```{r testing}
 
-# R program to create
-# subset of a data frame
-   
-# Creating a Data Frame
-df<-data.frame(row1 = 0:2, row2 = 3:5, row3 = 6:8)
-print ("Original Data Frame")
-print (df)
-   
-# Creating a Subset
-df1<-subset(df, select = row2)
-print("Modified Data Frame")
-print(df1)
+data_shopper <- get_data(Shopper_Tabs1, "furnishings")
 
-
+view(data_shopper)
 
 ```
