@@ -1,0 +1,91 @@
+---
+title: "Shopper_Investigation"
+author: "Jonah Schnettler"
+date: "April 15, 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Imports and Libraries
+
+##Libraries
+```{r libraries}
+#install.packages("ggpubr")
+library(readxl)
+library(tidyverse)
+library(ggpubr)
+library(caret)
+library(dplyr)
+library(stringr)
+```
+
+##Data Imports
+```{r import, include=FALSE}
+Shopper_Tabs1 <- read_excel("Shopper_Tabs_1.xlsx")
+Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
+Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
+```
+
+#Clean/build workable data.
+
+## Remove empty rows.
+```{r remove_empty_rows}
+remove_empty_rows <- function(.source) {
+  empty_rows <- apply(.source, 1, function(.source) all(is.na(.source)))
+  cleaned <- .source[!empty_rows,]
+  return(cleaned)
+}
+```
+*First step is to clear the empty rows after initial imports.
+
+##Break down data. (WIP)
+```{r gen_chunked_data}
+gen_chunked_data <- function(.data) {
+  j <- 1
+  for(i in 1:nrow(.data)) {
+    if (grepl(pattern="Demographic.*", .data[i, 1])) {
+      print("Pattern found")
+    }
+  }
+  return(new_data)
+}
+```
+*Now we want to break up the separate tables into subsets of data.
+
+## Start here!
+```{r clean data}
+#Clean excel imported data
+Shopper_Tabs1 <- remove_empty_rows(Shopper_Tabs1)
+Shopper_Tabs2 <- remove_empty_rows(Shopper_Tabs2)
+Shopper_Tabs3 <- remove_empty_rows(Shopper_Tabs3)
+
+Shopper_data1 <- gen_chunked_data(Shopper_Tabs1)
+
+view(Shopper_Tabs1)
+view(Shopper_Tabs2)
+view(Shopper_Tabs3)
+```
+*Run this to clean and build workable chunks of data for investigation.
+
+# Testing
+```{r testing}
+
+# R program to create
+# subset of a data frame
+   
+# Creating a Data Frame
+df<-data.frame(row1 = 0:2, row2 = 3:5, row3 = 6:8)
+print ("Original Data Frame")
+print (df)
+   
+# Creating a Subset
+df1<-subset(df, select = row2)
+print("Modified Data Frame")
+print(df1)
+
+
+
+```
