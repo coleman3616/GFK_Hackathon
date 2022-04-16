@@ -477,5 +477,3 @@ tmp2 %>%
 * Analyze top products in Cereal
 Top parent brands: Kellogg, Big G
 Most favorite brand: Cheerios (>50%)
-
-
