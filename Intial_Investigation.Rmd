@@ -458,13 +458,14 @@ tmp %>%
 * Majority prefer to buy cereal in store (~93%)
 
 ```{r top_Cereal_Brand_byUPC_Hack_Cereal2_}
+names(Hackathon_Data_Maps)[names(Hackathon_Data_Maps) == "UPC"] <- "upc"
 tmp2 <- UPC_Hack_Cereal2 %>% 
 	group_by(upc) %>% 
 	summarize(count = n()) %>% 
 	top_n(10, wt = count) %>%
 	mutate(propotion = count/sum(count)) %>%
 	left_join(Hackathon_Data_Maps, by="upc") %>%
-	select("upc", "count", "Parent Brand", "Brand") %>%
+	select("upc", "count", "propotion", "Parent Brand", "Brand") %>%
 	arrange(desc(count)) 
 
 kable(tmp2)
