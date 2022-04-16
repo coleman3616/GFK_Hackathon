@@ -18,6 +18,7 @@ library(caret)
 library(dplyr)
 library(stringr)
 library(knitr)
+library(treemap)
 ```
 Data Imports
 ```{r import, include=FALSE}
@@ -443,7 +444,6 @@ UPC_Hack_Cereal2 %>%
 tmp <- UPC_Hack_Cereal2 %>% 
      group_by(Online) %>% 
      summarize(count = n()) %>%
-     top_n(10, wt = count) %>%
      arrange(desc(count)) %>%
      mutate(Online = as.factor(Online)) %>%
      mutate(propotion = count/sum(count))
@@ -459,22 +459,55 @@ tmp %>%
 
 ```{r top_Cereal_Brand_byUPC_Hack_Cereal2_}
 names(Hackathon_Data_Maps)[names(Hackathon_Data_Maps) == "UPC"] <- "upc"
+names(Hackathon_Data_Maps)[names(Hackathon_Data_Maps) == "Parent Brand"] <- "Parent_Brand"
+
 tmp2 <- UPC_Hack_Cereal2 %>% 
 	group_by(upc) %>% 
-	summarize(count = n()) %>% 
-	top_n(10, wt = count) %>%
-	mutate(propotion = count/sum(count)) %>%
+	summarize(total = sum(qty)) %>% 
+	#top_n(30, wt = total) %>%
+	mutate(propotion = total/sum(total)) %>%
 	left_join(Hackathon_Data_Maps, by="upc") %>%
-	select("upc", "count", "propotion", "Parent Brand", "Brand") %>%
-	arrange(desc(count)) 
+	select("upc", "total", "propotion", "Parent_Brand", "Brand") %>%
+	group_by(Parent_Brand, Brand) %>%
+  arrange(desc(total)) 
 
 kable(tmp2)
 
-tmp2 %>% 
+treemap(tmp2,index=c("Parent_Brand","Brand"),vSize="total",title="",palette="Set3",border.col="#FFFFFF")
+
+tmp2 %>%
+  ggplot(aes(x=reorder(Parent_Brand,-propotion), y=propotion))+
+  geom_bar(stat="identity",fill="red")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+
+head(tmp2, 50) %>%
   ggplot(aes(x=reorder(Brand,-propotion), y=propotion))+
   geom_bar(stat="identity",fill="red")+
   theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+
 ```
 * Analyze top products in Cereal
-Top parent brands: Kellogg, Big G
-Most favorite brand: Cheerios (>50%)
+Top parent brands: Big G, Kelloggs. Counted for a total of ~70% cereal in stores
+Most favorite brand: Cheerios (>15%)
+Both table Cereal and Data Maps do not have any null value, but NA appears when join two tables together. Around 1% either have false upc numbers or comes from other brands not included in the maps.
+
+```{r Online_byCerealBrand}
+tmpOnline <- UPC_Hack_Cereal2 %>%
+     group_by(upc, Online) %>%
+     summarize(count=n()) %>% 
+     filter(Online == 1) %>%
+     arrange(desc(count)) %>%
+     left_join(Hackathon_Data_Maps, by="upc") %>%
+     select("upc", "count", "Parent_Brand", "Brand") %>%
+     group_by(Parent_Brand, Brand)
+kable(tmpOnline)
+
+tmpOnline %>%
+  ggplot(aes(x=reorder(Parent_Brand,-count), y=count))+
+  geom_bar(stat="identity",fill="blue")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+
+```
+* BigG and Kelloggs also take major leads in online order
+
+
