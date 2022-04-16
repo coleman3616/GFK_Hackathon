@@ -27,9 +27,6 @@ Summary_Basket_2020 <- read_csv("Summary_Basket_2020.csv")
 Summary_Basket_2021 <- read_csv("Summary_Basket_2021.csv")
 UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
 UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
-Shopper_Tabs1 <- read_excel("Shopper_Tabs_1.xlsx")
-Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
-Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
 Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
 ```
 
@@ -53,7 +50,6 @@ barVar <- function(data, index = 0) {
         temp <- data %>%
         count(.[, i]) %>%
           rename("x" = names(.[1]))
-
         #plot the occurences
         plots[[i]] <- ggplot(temp,aes(y = n, x = x)) +
         geom_bar(stat = "identity", aes(fill = n)) + 
@@ -109,7 +105,6 @@ countNA <- function(data, graph = FALSE) {
 #index: the specific attribute to find outliers for
 #Filter_out = TRUE: TRUE = only display non outlying data, 
 #                   FALSE = only display outlying data
-
 turkeyOutliers <- function(data, index, filter_out = TRUE) {
   raw_data <- data[index] %>%
     unlist() %>%
@@ -129,8 +124,6 @@ turkeyOutliers <- function(data, index, filter_out = TRUE) {
   }
       
 }
-
-
 ```
 
 
@@ -214,7 +207,6 @@ upcAnalyze <- function(upc_select, combine = FALSE)  {
     ggplot(aes(y = price, x = date)) +
     geom_point() +
     ggtitle("price of item")
-
   Average_Price_Of_Item <- Individual_UPC %>%
     group_by(date) %>%
     summarise(mean_price = mean(price), average_qty = mean(qty)) %>%
@@ -223,12 +215,10 @@ upcAnalyze <- function(upc_select, combine = FALSE)  {
     labs(color='Average Quantity') +
     geom_point() +
     ggtitle("Average price of item")
-
   distribution <- Individual_UPC %>%
     ggplot(aes(x = price)) +
     geom_boxplot() +
     ggtitle("Distribution")
-
   if (combine == FALSE) {
     print(Price_Of_Item)
     print(Average_Price_Of_Item)
@@ -253,7 +243,6 @@ upcAnalyze <- function(upc_select, combine = FALSE)  {
 
 
 ```{r}
-
 ```
 
 #Convert number to %
@@ -270,23 +259,13 @@ remove_empty_rows <- function(.source) {
   return(cleaned)
 }
 ```
-
-#Clean excel imported data
-```{r}
-Shopper_Tabs1 <- remove_empty_rows(Shopper_Tabs1)
-Shopper_Tabs2 <- remove_empty_rows(Shopper_Tabs2)
-Shopper_Tabs3 <- remove_empty_rows(Shopper_Tabs3)
-view(Shopper_Tabs1)
-view(Shopper_Tabs2)
-view(Shopper_Tabs3)
-```
+*Remove any completely empty rows. Use if needed.
 
 #Investigate Summary_Basket_2019
 ```{r}
   #view(Summary_Basket_2019)
   filter(Summary_Basket_2019,Summary_Basket_2019$Online == 1)
   OnlineVStore_2019 <- Summary_Basket_2019 %>% count(Online)
-
 ```
 
 #Investigate Summary_Basket_2020
@@ -294,7 +273,6 @@ view(Shopper_Tabs3)
   #view(Summary_Basket_2020)
   filter(Summary_Basket_2020,Summary_Basket_2020$Online == 1)
   OnlineVStore_2020 <- Summary_Basket_2020 %>% count(Online)
-
 ```
 
 #Investigate Summary_Basket_2021
@@ -304,7 +282,6 @@ view(Shopper_Tabs3)
   rename()
   OnlineVStore_2021 <- Summary_Basket_2021 %>% count(Online)
   
-
 ```
 
 
@@ -320,7 +297,6 @@ Joining
   OvR <- OvR %>%
     rename_with(~ newnames, all_of(oldnames))
   OvR
-
 ```
 
 
@@ -389,7 +365,6 @@ Summary_Basket_2019 %>%
   summarise(sum_totqty = sum(totqty),sum_totdol = sum(totdol)) %>%
   ggplot(aes(y = sum_totdol, x = sum_totqty, color = Store)) +
   geom_point()
-
 ```
 * This visualization shows the total dollars spent in a specific store vs
 the total quantity. As one may expect, as the stores' totalqty increases
@@ -401,18 +376,15 @@ less popular stores while the stores in the top right are more popular
 ```{r Store Count}
 UPC_Hack_Cereal2 %>%
   barVar(index = 2)
-
 UPC_Hack_Cereal2 %>%
   count(Store) %>%
   arrange(desc(n))
-
 UPC_Hack_Cleaners2 %>%
   barVar(index = 2)
  
 UPC_Hack_Cleaners2 %>%
   count(Store) %>%
   arrange(desc(n))
-
 ```
 * Store 15 and Store 17 are the stores with most data available
 
@@ -420,7 +392,6 @@ UPC_Hack_Cleaners2 %>%
 UPC_Hack_Cereal2 %>%
   group_by(upc)%>%
   nrow()
-
 UPC_Hack_Cereal2 %>%
   group_by(Store)%>%
   nrow()
@@ -448,7 +419,6 @@ tmp <- UPC_Hack_Cereal2 %>%
      mutate(Online = as.factor(Online)) %>%
      mutate(propotion = count/sum(count))
 kable(tmp)
-
 tmp %>% 
      ggplot(aes(x=Online,y=propotion,fill=Online))+
      geom_text(aes(label=percent(propotion)), vjust=-0.2)+
@@ -460,7 +430,6 @@ tmp %>%
 ```{r top_Cereal_Brand_byUPC_Hack_Cereal2_}
 names(Hackathon_Data_Maps)[names(Hackathon_Data_Maps) == "UPC"] <- "upc"
 names(Hackathon_Data_Maps)[names(Hackathon_Data_Maps) == "Parent Brand"] <- "Parent_Brand"
-
 tmp2 <- UPC_Hack_Cereal2 %>% 
 	group_by(upc) %>% 
 	summarize(total = sum(qty)) %>% 
@@ -470,21 +439,16 @@ tmp2 <- UPC_Hack_Cereal2 %>%
 	select("upc", "total", "propotion", "Parent_Brand", "Brand") %>%
 	group_by(Parent_Brand, Brand) %>%
   arrange(desc(total)) 
-
 kable(tmp2)
-
 treemap(tmp2,index=c("Parent_Brand","Brand"),vSize="total",title="",palette="Set3",border.col="#FFFFFF")
-
 tmp2 %>%
   ggplot(aes(x=reorder(Parent_Brand,-propotion), y=propotion))+
   geom_bar(stat="identity",fill="red")+
   theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
-
 head(tmp2, 50) %>%
   ggplot(aes(x=reorder(Brand,-propotion), y=propotion))+
   geom_bar(stat="identity",fill="red")+
   theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
-
 ```
 * Analyze top products in Cereal
 Top parent brands: Big G, Kelloggs. Counted for a total of ~70% cereal in stores
@@ -501,13 +465,9 @@ tmpOnline <- UPC_Hack_Cereal2 %>%
      select("upc", "count", "Parent_Brand", "Brand") %>%
      group_by(Parent_Brand, Brand)
 kable(tmpOnline)
-
 tmpOnline %>%
   ggplot(aes(x=reorder(Parent_Brand,-count), y=count))+
   geom_bar(stat="identity",fill="blue")+
   theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
-
 ```
 * BigG and Kelloggs also take major leads in online order
-
-
