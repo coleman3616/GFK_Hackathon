@@ -148,7 +148,7 @@ s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
 *This gets the initial cleaned data for the shopper tab data and then generates the individual tibbles to be able to work with.
 
 ## view all data and generated data
-```{r testing}
+```{r view_data}
 
 # Initial data after being cleaned
 #view(Shopper_Tabs1)
@@ -222,3 +222,21 @@ s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
 
 
 
+
+
+#Initial_Investigation
+
+##Shopper_tabs1
+```{r investigate_shopper_tabs1}
+
+```
+
+##Shopper_tabs2
+```{r investigate_shopper_tabs2}
+
+```
+
+##Shopper_tabs3
+```{r investigate_shopper_tabs3}
+
+```
