@@ -1,0 +1,135 @@
+---
+title: "product_by_brand"
+Author: "Anh Hoang"
+Date: "April 16th, 2022"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Libraries
+```{r libraries}
+library(readxl)
+library(tidyverse)
+library(caret)
+library(dplyr)
+library(stringr)
+library(knitr)
+library(treemap)
+library(rio)
+```
+Data Imports
+```{r import, include=FALSE}
+Summary_Basket_2019 <- read_csv("Summary_Basket_2019.csv")
+Summary_Basket_2020 <- read_csv("Summary_Basket_2020.csv")
+Summary_Basket_2021 <- read_csv("Summary_Basket_2021.csv")
+UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
+UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
+Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
+```
+Convert number to %
+```{r convert_to_percent}
+percent <- function(x, digits = 2, format = "f", ...) {
+	paste0(formatC(x * 100, format = format, digits = digits, ...), "%")}
+```
+
+** Analysis
+```{r Online_vs_Offline_byUPC_Hack_Cereal2_}
+tmp <- UPC_Hack_Cereal2 %>% 
+     group_by(Online) %>% 
+     summarize(count = n()) %>%
+     arrange(desc(count)) %>%
+     mutate(Online = as.factor(Online)) %>%
+     mutate(propotion = count/sum(count))
+kable(tmp)
+tmp %>% 
+     ggplot(aes(x=Online,y=propotion,fill=Online))+
+     geom_text(aes(label=percent(propotion)), vjust=-0.2)+
+     geom_bar(stat="identity")
+```
+
+* Majority prefer to buy cereal in store (~93%)
+
+```{r top_Cereal_Brand_byUPC_Hack_Cereal2_}
+names(Hackathon_Data_Maps)[names(Hackathon_Data_Maps) == "UPC"] <- "upc"
+names(Hackathon_Data_Maps)[names(Hackathon_Data_Maps) == "Parent Brand"] <- "Parent_Brand"
+tmp2 <- UPC_Hack_Cereal2 %>% 
+	group_by(upc) %>% 
+	summarize(total = sum(qty)) %>% 
+	#top_n(30, wt = total) %>%
+	mutate(propotion = total/sum(total)) %>%
+	left_join(Hackathon_Data_Maps, by="upc") %>%
+	select("upc", "total", "propotion", "Parent_Brand", "Brand") %>%
+	group_by(Parent_Brand, Brand) %>%
+  arrange(desc(total)) 
+kable(tmp2)
+
+treemap(tmp2,index=c("Parent_Brand","Brand"),vSize="total",title="",palette="Set3",border.col="#FFFFFF")
+
+tmp2 %>%
+  ggplot(aes(x=reorder(Parent_Brand,-propotion), y=propotion))+
+  geom_bar(stat="identity",fill="red")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+
+head(tmp2, 50) %>%
+  ggplot(aes(x=reorder(Brand,-propotion), y=propotion))+
+  geom_bar(stat="identity",fill="red")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+```
+
+* Analyze top products in Cereal (2019-2021)
+Top parent brands: Big G, Kelloggs. Counted for a total of ~70% cereal in stores
+Most favorite brand: Cheerios (>15%)
+
+```{r Online_byCerealBrand}
+tmpOnline <- UPC_Hack_Cereal2 %>%
+     group_by(upc, Online) %>%
+     summarize(count=n()) %>% 
+     filter(Online == 1) %>%
+     arrange(desc(count)) %>%
+     left_join(Hackathon_Data_Maps, by="upc") %>%
+     select("upc", "count", "Parent_Brand", "Brand") %>%
+     group_by(Parent_Brand, Brand)
+kable(tmpOnline)
+
+tmpOnline %>%
+  ggplot(aes(x=reorder(Parent_Brand,-count), y=count))+
+  geom_bar(stat="identity",fill="blue")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+
+```
+* BigG and Kelloggs also take major leads in online order
+
+
+```{r top_Cereal_Brand_byUPC_Hack_Cleaner_}
+Data_Maps2 <- import_list("Hackathon_Data_Maps.xlsx")
+
+names(Data_Maps2$`Cleaners UPCs`)[names(Data_Maps2$`Cleaners UPCs`) == "UPC"] <- "upc"
+names(Data_Maps2$`Cleaners UPCs`)[names(Data_Maps2$`Cleaners UPCs`) == "Parent Brand"] <- "Parent_Brand"
+
+
+tmpClean <- UPC_Hack_Cleaners2 %>% 
+	group_by(upc) %>% 
+	summarize(total = sum(qty)) %>% 
+	#top_n(30, wt = total) %>%
+	mutate(propotion = total/sum(total)) %>%
+	left_join(Data_Maps2$`Cleaners UPCs`, by="upc") %>%
+	select("upc", "total", "propotion", "Parent_Brand", "Brand") %>%
+  na.omit() %>%
+	group_by(Parent_Brand, Brand) %>%
+  arrange(desc(total)) 
+
+kable(tmpClean)
+
+treemap(tmpClean,index=c("Parent_Brand","Brand"),vSize="total",title="",palette="Set3",border.col="#FFFFFF")
+
+tmpClean %>%
+  ggplot(aes(x=Parent_Brand, y=propotion))+
+  geom_bar(stat="identity",fill="red")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+
+head(tmpClean, 50) %>%
+  ggplot(aes(x=Brand, y=propotion))+
+  geom_bar(stat="identity",fill="red")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+```
