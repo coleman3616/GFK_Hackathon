@@ -508,6 +508,9 @@ tmpOnline %>%
   theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
 
 ```
+
 * BigG and Kelloggs also take major leads in online order
+
+
 
 
