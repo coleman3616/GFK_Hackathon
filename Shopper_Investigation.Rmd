@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 #Imports and Libraries
 
 ##Libraries
@@ -21,6 +22,7 @@ library(caret)
 library(dplyr)
 library(stringr)
 ```
+*inlude librarys here. Commented section is example code for installing any missing packages.
 
 ##Data Imports
 ```{r import, include=FALSE}
@@ -28,6 +30,8 @@ Shopper_Tabs1 <- read_excel("Shopper_Tabs_1.xlsx")
 Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
 Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
 ```
+*Import the data sets for shopper_tabs. Refactoring names is necessary for this.
+
 
 #Clean/build workable data.
 
@@ -42,7 +46,7 @@ remove_empty_rows <- function(.source) {
 ```
 *First step is to clear the empty rows after initial imports and then remove the percentage down column since it is constant for all data.
 
-##Look at a specific set of data. (WIP)
+##Look at a specific set of data.
 ```{r get_data}
 get_data <- function(.data, key) {
   found <- FALSE
@@ -79,6 +83,7 @@ get_data <- function(.data, key) {
     names(new_data)[3:ncol(new_data)] <- new_data[3, 3:ncol(new_data)]
     new_data <- new_data[4:nrow(new_data),]
   }
+  new_data <- new_data[-c(3), ]
   return(new_data)
 }
 ```
@@ -156,14 +161,14 @@ s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
 #view(Shopper_Tabs3)
 
 # Check first, mid, last of shopper_tabs1
-#view(s1_past_six_months)
+view(s1_past_six_months)
 #view(s1_mobile_devices)
 #view(s1_household_washing)
 #view(s1_haircare)
 #view(s1_skincare)
 #view(s1_cosmetics)
 #view(s1_packaged_food)
-#view(s1_toys)
+view(s1_toys)
 #view(s1_small_home_appliances)
 #view(s1_fashion)
 #view(s1_healthcare)
@@ -172,7 +177,7 @@ s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
 #view(s1_streaming)
 #view(s1_wearables)
 #view(s1_computing)
-#view(s1_home_furnishings)
+view(s1_home_furnishings)
 
 # Check first, mid, last of shopper_tabs2
 #view(s2_smartphones)
@@ -213,21 +218,13 @@ s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
 *Create views for any/all initialized data in this Rmd file.
 
 
-
-
-
-
-
-
-
-
-
-
-
 #Initial_Investigation
 
 ##Shopper_tabs1
 ```{r investigate_shopper_tabs1}
+
+
+
 
 ```
 
