@@ -17,15 +17,17 @@ library(stringr)
 library(knitr)
 library(treemap)
 library(rio)
+library(lubridate)
+library(reshape2)
 ```
 Data Imports
 ```{r import, include=FALSE}
 Summary_Basket_2019 <- read_csv("Summary_Basket_2019.csv")
-Summary_Basket_2020 <- read_csv("Summary_Basket_2020.csv")
-Summary_Basket_2021 <- read_csv("Summary_Basket_2021.csv")
-UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
-UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
-Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
+#Summary_Basket_2020 <- read_csv("Summary_Basket_2020.csv")
+#Summary_Basket_2021 <- read_csv("Summary_Basket_2021.csv")
+#UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
+#UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
+#Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
 ```
 Convert number to %
 ```{r convert_to_percent}
@@ -133,3 +135,74 @@ head(tmpClean, 50) %>%
   geom_bar(stat="identity",fill="red")+
   theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
 ```
+
+
+```{r test - DONT' RUN}
+#combine dataset in 20,21,22
+Summary_Basket_1921 <- rbind(Summary_Basket_2019, Summary_Basket_2020, Summary_Basket_2021)
+#Check for NA value - No NA existed
+sum(is.na(Summary_Basket_1921))
+#Convert date
+Summary_Basket_1921$date <- as.Date(as.character(Summary_Basket_1921$date), format ='%y-%m-%d')
+Summary_Basket_1921$year <- year(Summary_Basket_1921$date)
+Summary_Basket_1921$month <- month(Summary_Basket_1921$date)
+Summary_Basket_1921$day <- day(Summary_Basket_1921$date)
+Summary_Basket_1921$weekday <- weekdays(Summary_Basket_1921$date)
+#Overview on Basket 19-21
+summary(Summary_Basket_1921)
+
+```
+** Over 3 years 19-21, each household spend an average of $31.40 and around 14 items/purchase. The amount of online purchase is quite small (0.01 mean).   
+
+
+```{r test2}
+#Check for NA value - No NA existed
+sum(is.na(Summary_Basket_2019))
+#Convert date
+Summary_Basket_2019$date <- as.Date(as.character(Summary_Basket_2019$date), format='%y-%m-%d')
+Summary_Basket_2019$year <- year(Summary_Basket_2019$date)
+Summary_Basket_2019$month <- month(Summary_Basket_2019$date)
+Summary_Basket_2019$day <- day(Summary_Basket_2019$date)
+Summary_Basket_2019$weekday <- weekdays(Summary_Basket_2019$date)
+#Overview on Basket 19-21
+summary(Summary_Basket_2019)
+#Check to see missing data
+colSums(is.na(Summary_Basket_2019))
+is.null(Summary_Basket_2019)
+#Check numeric columns to subset
+sapply(Summary_Basket_2019, is.numeric)
+Summary_Basket_2019_numcols <- select(Summary_Basket_2019, "HHID", "Store", "totqty", "totdol", "Online")
+#Find correlation
+cor(Summary_Basket_2019_numcols)
+melted_corr <- melt(cor(Summary_Basket_2019_numcols))
+ggplot(data = melted_corr, aes(x = Var1, y = Var2, fill = value)) 
++ geom_tile() + scale_fill_gradient(low="grey", high="darkred") 
++ geom_text(aes(x = Var1, y = Var2, label =round(value, 2)), size = 4) 
++ labs(title = "Correlation Matrix", fill = "Coefficient Range") 
++ theme(axis.text.x=element_text(angle=45, vjust = 0.5))
+
+#Analyze by store
+Summary_Basket_2019 %>% select(Store) %>% distinct() %>% count()
+#aggregate(Summary_Basket_2019$totdol~Summary_Basket_2019$Store, data = Summary_Basket_2019, sum)
+most_popular_shop <- Summary_Basket_2019 %>% group_by(Store) %>% summarise(total.sales = sum(totdol)) %>% arrange(desc(total.sales)) %>% ungroup() %>% top_n(20, total.sales)
+shopRevenue2019 <- ggplot(data = most_popular_shop, aes(x=reorder(as.factor(Store), total.sales), y = total.sales, fill = as.factor(Store))) + geom_bar(stat = "identity", show.legend = FALSE) + coord_flip() + labs(title = "Most popular store with most sales", x = "Store", y = "Total Sales", fill = "Store") 
+
+shop_vs_hhid <- Summary_Basket_2019 %>% group_by(Store) %>% summarise(total.hhid = n_distinct(HHID)) %>% arrange(desc(total.hhid)) %>% ungroup() %>% top_n(20, total.hhid)
+shopHouseHold2019 <- ggplot(data = shop_vs_hhid, aes(x=reorder(as.factor(Store), total.hhid), y = total.hhid, fill = as.factor(Store))) + geom_bar(stat = "identity", show.legend = FALSE) + coord_flip() + labs(title = "Store with most households coming", x = "Store", y = "Total Household", fill = "Store") 
+
+require(gridExtra)
+grid.arrange(shopHouseHold2019, shopRevenue2019, ncol = 2)
+
+```
+** 
+There are a total of 51 stores and 363,785 households available in this analysis.
+In 2019, these 51 stores sold ~182M items, generating $643M revenue.
+Household tends to purchase around $45/purchase and 12-13 items/purchase.
+Store 15 and 7 generate most revenue, with ~40M revenue in 2019.
+However, store with most households coming are store 21 and 27, attracting ~60k households stopping by. However, their revenue are just around top 10. 
+On the other hand, store 7 attracts less than >10k customers but still generate >$10M compared to store 21 in 2019.  
+What makes this differences? Are these two located in lower income area, or the high products offered not enough? We need further analysis on this. 
+On further analysis to see relationship between household and sales. 
+
+
+
