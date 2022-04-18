@@ -26,7 +26,7 @@ Summary_Basket_2019 <- read_csv("Summary_Basket_2019.csv")
 #Summary_Basket_2020 <- read_csv("Summary_Basket_2020.csv")
 #Summary_Basket_2021 <- read_csv("Summary_Basket_2021.csv")
 #UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
-#UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
+UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
 #Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
 ```
 Convert number to %
@@ -169,17 +169,15 @@ summary(Summary_Basket_2019)
 #Check to see missing data
 colSums(is.na(Summary_Basket_2019))
 is.null(Summary_Basket_2019)
+#Change unit from e to normal
+options(scipen = 4)
 #Check numeric columns to subset
 sapply(Summary_Basket_2019, is.numeric)
 Summary_Basket_2019_numcols <- select(Summary_Basket_2019, "HHID", "Store", "totqty", "totdol", "Online")
 #Find correlation
 cor(Summary_Basket_2019_numcols)
 melted_corr <- melt(cor(Summary_Basket_2019_numcols))
-ggplot(data = melted_corr, aes(x = Var1, y = Var2, fill = value)) 
-+ geom_tile() + scale_fill_gradient(low="grey", high="darkred") 
-+ geom_text(aes(x = Var1, y = Var2, label =round(value, 2)), size = 4) 
-+ labs(title = "Correlation Matrix", fill = "Coefficient Range") 
-+ theme(axis.text.x=element_text(angle=45, vjust = 0.5))
+ggplot(data = melted_corr, aes(x = Var1, y = Var2, fill = value)) + geom_tile() + scale_fill_gradient(low="grey", high="darkred") + geom_text(aes(x = Var1, y = Var2, label =round(value, 2)), size = 4) + labs(title = "Correlation Matrix", fill = "Coefficient Range") + theme(axis.text.x=element_text(angle=45, vjust = 0.5))
 
 #Analyze by store
 Summary_Basket_2019 %>% select(Store) %>% distinct() %>% count()
@@ -190,8 +188,19 @@ shopRevenue2019 <- ggplot(data = most_popular_shop, aes(x=reorder(as.factor(Stor
 shop_vs_hhid <- Summary_Basket_2019 %>% group_by(Store) %>% summarise(total.hhid = n_distinct(HHID)) %>% arrange(desc(total.hhid)) %>% ungroup() %>% top_n(20, total.hhid)
 shopHouseHold2019 <- ggplot(data = shop_vs_hhid, aes(x=reorder(as.factor(Store), total.hhid), y = total.hhid, fill = as.factor(Store))) + geom_bar(stat = "identity", show.legend = FALSE) + coord_flip() + labs(title = "Store with most households coming", x = "Store", y = "Total Household", fill = "Store") 
 
+#Analyze by month&Date
+most_popular_month <- Summary_Basket_2019 %>% group_by(month) %>% summarise(total.sales = sum(totdol)) %>% arrange(desc(total.sales)) %>% ungroup()
+ggplot(data = most_popular_month, aes(x=as.factor(month), y = total.sales, fill = as.factor(month))) + geom_bar(stat = "identity", show.legend = FALSE) + labs(title = "Most popular month", x = "Month", y = "Total Sales", fill = "Month") 
+
+most_popular_date <- Summary_Basket_2019 %>% group_by(day) %>% summarise(total.sales = sum(totdol)) %>% arrange(desc(total.sales)) %>% ungroup()
+ggplot(data = most_popular_month, aes(x=as.factor(month), y = total.sales, fill = as.factor(month))) + geom_bar(stat = "identity", show.legend = FALSE) + labs(title = "Most popular month", x = "Month", y = "Total Sales", fill = "Month") 
+
+
 require(gridExtra)
 grid.arrange(shopHouseHold2019, shopRevenue2019, ncol = 2)
+
+#Analyze by date/month
+
 
 ```
 ** 
