@@ -13,7 +13,7 @@ library(dplyr)
 library(stringr)
 library(knitr)
 library(treemap)
-library(gapminder)
+#library(gapminder)
 
 
 ```
@@ -136,11 +136,6 @@ ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill =
   geom_bar(stat = "identity") + 
   facet_wrap(~month) +
   ggtitle("Year 2021")
-```
-```{r}
-
-
-
 ```
 
 
