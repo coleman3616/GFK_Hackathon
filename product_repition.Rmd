@@ -13,6 +13,9 @@ library(dplyr)
 library(stringr)
 library(knitr)
 library(treemap)
+library(gapminder)
+
+
 ```
 Data Imports
 ```{r import, include=FALSE}
@@ -90,8 +93,19 @@ cleaners_bought <-  UPC_Hack_Cleaners2 %>%
   filter(!is.na(total_amount_bought))
 
 ```
+```{r}
+#cereal_bought %>%
+#  ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill = Brand)) + 
+#  theme (axis.text.x = element_blank(), axis.text.y=element_blank(), axis.ticks.x=element_blank(), legend.position="bottom") +
+#  geom_bar(stat = "identity") +
+#  facet_wrap(~year) +
+#  labs(title = 'Month: {frame_time}', x = 'Brand', y = 'Total Bought') +
+#  transition_time(month) +
+#  ease_aes('linear')
+```
 
-```{r Brand Popularity per month (2019,2020,2021)}
+
+```{r Cereal Brand Popularity per month (2019,2020,2021)}
 brand_bought <- cereal_bought %>%
   group_by(Brand,month, year) %>%
   summarise(total_bought_brand = sum(total_amount_bought))
@@ -123,6 +137,13 @@ ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill =
   facet_wrap(~month) +
   ggtitle("Year 2021")
 ```
+```{r}
+
+
+
+```
+
+
 ```{r, floating brands}
 brand_bought %>%
   group_by(Brand) %>%
@@ -145,6 +166,8 @@ brand_bought %>%
   count() %>%
   filter(n < 12)
 ```
+
+* These are the brands that do not exceed 5000 for all 12 months.  
 
 ```{r}
 brand_bought <- cleaners_bought %>%
@@ -178,6 +201,11 @@ ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill =
   facet_wrap(~month) +
   ggtitle("Year 2021")
 ```
-* strangely Lysol had a monopoly in 2019, and 2020 but not 2021. 
+* strangely Lysol had alot better sales in 2019, and 2020 but not 2021. 
+  > https://fortune.com/2021/07/27/post-pandemic-shopping-ups-lysol-costco/
+
 * Lysol also had a spike in march of 2020. I assume this is because of the 
 desire for Lysol wipes because of covid.
+
+
+
