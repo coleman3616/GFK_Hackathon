@@ -24,13 +24,15 @@ UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
 Shopper_Tabs1 <- read_excel("Shopper_Tabs_1.xlsx")
 Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
 Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
-Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
+Cereal_Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
+Cleaners_Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx", sheet = 2)
 #--------------------------------------------------------------
 UPC_Hack_Cereal2 <- UPC_Hack_Cereal2 %>% 
       mutate(date = as.Date(str_c("20",date)))
+UPC_Hack_Cleaners2 <- UPC_Hack_Cleaners2 %>% 
+      mutate(date = as.Date(str_c("20",date)))
 
 ```
-
 
 ```{r}
 numToMonth<- function(num) {
@@ -73,7 +75,18 @@ cereal_bought <- UPC_Hack_Cereal2 %>%
          year = format(date, "%y")) %>%
   group_by(UPC,month, year) %>%
   summarise(total_amount_bought = sum(qty))  %>%
-  left_join(y = .,x = Hackathon_Data_Maps, by = "UPC") %>%
+  left_join(y = .,x = Cereal_Hackathon_Data_Maps, by = "UPC") %>%
+  filter(!is.na(total_amount_bought))
+
+cleaners_bought <-  UPC_Hack_Cleaners2 %>%
+  rename(UPC = "upc") %>%
+  mutate(month = format(date, "%m") %>% 
+           as.integer() %>% 
+           numToMonth(), 
+         year = format(date, "%y")) %>%
+  group_by(UPC,month, year) %>%
+  summarise(total_amount_bought = sum(qty))  %>%
+  left_join(y = .,x = Cleaners_Hackathon_Data_Maps, by = "UPC") %>%
   filter(!is.na(total_amount_bought))
 
 ```
@@ -133,4 +146,38 @@ brand_bought %>%
   filter(n < 12)
 ```
 
-
+```{r}
+brand_bought <- cleaners_bought %>%
+  group_by(Brand,month, year) %>%
+  summarise(total_bought_brand = sum(total_amount_bought))
+#------------------------------- Year 2019
+brand_bought %>% 
+  filter(total_bought_brand > 500) %>%
+  filter(year == "19") %>%
+ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill = Brand)) + 
+        theme (axis.text.x = element_blank(), axis.text.y=element_blank(), axis.ticks.x=element_blank(), legend.position="bottom") +
+  geom_bar(stat = "identity")  + 
+  facet_wrap(~month) +
+  ggtitle("Year 2019")
+#------------------------------- Year 2020
+brand_bought %>% 
+  filter(total_bought_brand > 500) %>%
+  filter(year == "20") %>%
+ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill = Brand)) + 
+        theme (axis.text.x = element_blank(), axis.text.y=element_blank(), axis.ticks.x=element_blank(), legend.position="bottom") +
+  geom_bar(stat = "identity") + 
+  facet_wrap(~month) +
+  ggtitle("Year 2020")
+#------------------------------- Year 2021
+brand_bought %>% 
+  filter(total_bought_brand > 500) %>%
+  filter(year == "21") %>%
+ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill = Brand)) + 
+        theme (axis.text.x = element_blank(), axis.text.y=element_blank(), axis.ticks.x=element_blank(), legend.position="bottom") +
+  geom_bar(stat = "identity") + 
+  facet_wrap(~month) +
+  ggtitle("Year 2021")
+```
+* strangely Lysol had a monopoly in 2019, and 2020 but not 2021. 
+* Lysol also had a spike in march of 2020. I assume this is because of the 
+desire for Lysol wipes because of covid.
