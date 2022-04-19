@@ -162,13 +162,13 @@ s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
 
 # Check first, mid, last of shopper_tabs1
 view(s1_past_six_months)
-#view(s1_mobile_devices)
-#view(s1_household_washing)
-#view(s1_haircare)
+view(s1_mobile_devices)
+view(s1_household_washing)
+view(s1_haircare)
 #view(s1_skincare)
 #view(s1_cosmetics)
 #view(s1_packaged_food)
-view(s1_toys)
+#view(s1_toys)
 #view(s1_small_home_appliances)
 #view(s1_fashion)
 #view(s1_healthcare)
@@ -177,7 +177,7 @@ view(s1_toys)
 #view(s1_streaming)
 #view(s1_wearables)
 #view(s1_computing)
-view(s1_home_furnishings)
+#view(s1_home_furnishings)
 
 # Check first, mid, last of shopper_tabs2
 #view(s2_smartphones)
@@ -220,11 +220,34 @@ view(s1_home_furnishings)
 
 #Initial_Investigation
 
+##get weighted and unweighted data.
+```{r get_weighted}
+get_weighted <- function(.data, weight) {
+  weighted_data <- .data
+  for (i in 3:nrow(.data)) {
+    weighted_data[i,1] <- .data[i,1]
+    for (j in 2:ncol(.data)) {
+      weighted_data[1, j] <- .data[1,j]
+      weighted_data[i, j] <- as.numeric(weighted_data[i, j]) * as.numeric(weighted_data[weight, j])
+    }
+  }
+  weighted_data <- weighted_data[-c(1,2),]
+  return(weighted_data)
+}
+```
+*This function calculates the weighted and unweighted data. To select weight, pass integer of 1 for unweighted and 2 for weighted.
+
 ##Shopper_tabs1
 ```{r investigate_shopper_tabs1}
 
+s1_weighted_data <- get_weighted(s1_mobile_devices, 2)
+s1_unweighted_data <- get_weighted(s1_mobile_devices, 1)
 
+view(s1_weighted_data)
+view(s1_unweighted_data)
 
+ggplot(s1_weighted_data, aes(Total)) + 
+  geom_bar() 
 
 ```
 
