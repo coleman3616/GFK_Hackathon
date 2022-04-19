@@ -223,16 +223,16 @@ view(s1_haircare)
 ##get weighted and unweighted data.
 ```{r get_weighted}
 get_weighted <- function(.data, weight) {
-  weighted_data <- .data
+  weighted_df <- as.data.frame(.data)
   for (i in 3:nrow(.data)) {
-    weighted_data[i,1] <- .data[i,1]
+    weighted_df[i,1] <- as.data.frame(.data[i,1])
     for (j in 2:ncol(.data)) {
-      weighted_data[1, j] <- .data[1,j]
-      weighted_data[i, j] <- as.numeric(weighted_data[i, j]) * as.numeric(weighted_data[weight, j])
+      weighted_df[1, j] <- as.data.frame(.data[1,j])
+      weighted_df[i, j] <- as.numeric(weighted_df[i, j]) %*% as.numeric(weighted_df[weight, j])
     }
   }
-  weighted_data <- weighted_data[-c(1,2),]
-  return(weighted_data)
+  weighted_df <- weighted_df[-c(1,2),]
+  return(weighted_df)
 }
 ```
 *This function calculates the weighted and unweighted data. To select weight, pass integer of 1 for unweighted and 2 for weighted.
@@ -247,7 +247,7 @@ view(s1_weighted_data)
 view(s1_unweighted_data)
 
 ggplot(s1_weighted_data, aes(Total)) + 
-  geom_bar() 
+  geom_bar(stat = "identity") 
 
 ```
 
@@ -260,3 +260,10 @@ ggplot(s1_weighted_data, aes(Total)) +
 ```{r investigate_shopper_tabs3}
 
 ```
+
+
+
+
+
+
+
