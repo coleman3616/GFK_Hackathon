@@ -204,3 +204,38 @@ desire for Lysol wipes because of covid.
 
 
 
+```{r}
+
+tmp <- Cereal_Hackathon_Data_Maps %>%
+  rename(Category = "Cat")
+
+UPC_All <- rbind(UPC_Hack_Cereal2, UPC_Hack_Cleaners2)
+datamap_all <- rbind(Cleaners_Hackathon_Data_Maps, tmp) %>%
+  rename(upc = "UPC")
+
+All_Products <- UPC_All %>% 
+  left_join(y = ., x = datamap_all, by = "upc")
+
+All_Products <- All_Products %>%
+  group_by(HHID)  %>%
+  select(HHID, upc)
+
+
+#tb <- data.table()
+#for(i in All_Products$HHID) {
+#  tb[i] = 0
+#}
+  
+
+
+  
+#library(arules)
+#rules <- apriori(All_Products, parameter = list(supp = 0.01, conf = 0.2))
+
+
+```
+
+
+
+
+
