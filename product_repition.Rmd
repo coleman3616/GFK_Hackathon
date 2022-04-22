@@ -196,15 +196,16 @@ ggplot(aes(x = reorder(Brand,total_bought_brand), y = total_bought_brand, fill =
   facet_wrap(~month) +
   ggtitle("Year 2021")
 ```
-* strangely Lysol had alot better sales in 2019, and 2020 but not 2021. 
+
+* strangely Lysol had better sales in 2019, and 2020 but not 2021. 
   > https://fortune.com/2021/07/27/post-pandemic-shopping-ups-lysol-costco/
 
 * Lysol also had a spike in march of 2020. I assume this is because of the 
-desire for Lysol wipes because of covid.
+need for Lysol wipes because of covid.
 
 
-
-```{r}
+# Do not run, took 4 hours to compute
+```{r transform_set}
 
 tmp <- Cereal_Hackathon_Data_Maps %>%
   rename(Category = "Cat")
@@ -216,26 +217,46 @@ datamap_all <- rbind(Cleaners_Hackathon_Data_Maps, tmp) %>%
 All_Products <- UPC_All %>% 
   left_join(y = ., x = datamap_all, by = "upc")
 
-All_Products <- All_Products %>%
-  group_by(HHID)  %>%
-  select(HHID, upc)
+tmp <- Cereal_Hackathon_Data_Maps %>%
+  rename(Category = "Cat")
+
+UPC_All <- rbind(UPC_Hack_Cereal2, UPC_Hack_Cleaners2)
+datamap_all <- rbind(Cleaners_Hackathon_Data_Maps, tmp) %>%
+  rename(upc = "UPC")
+
+All_Products <- UPC_All %>% 
+  left_join(y = ., x = datamap_all, by = "upc") %>%
+  filter(!is.na(HHID))
 
 
-#tb <- data.table()
-#for(i in All_Products$HHID) {
-#  tb[i] = 0
-#}
-  
+
+HHID_List <- unique(All_Products$HHID)
+upc_unique <-unique(All_Products$upc)
+basket_frame <- data.frame(matrix(0, ncol = length(upc_unique), nrow = length(HHID_List)))
+names(basket_frame) = upc_unique
 
 
-  
-#library(arules)
-#rules <- apriori(All_Products, parameter = list(supp = 0.01, conf = 0.2))
+
+for(k in 1:nrow(All_Products)) {
+      basket_frame[which(HHID_List == All_Products$HHID[k]),
+                   names(basket_frame) == All_Products$upc[k]] <- 1
+}
 
 
+
+for(i in 1:length(names(basket_frame))) {
+  names(basket_frame)[i] <- (All_Products %>%
+                               filter(upc == names(basket_frame)[i]) %>% select(Description))[1,1]
+}
+  #basket_frame[i,] = 0
 ```
 
 
+```{r}
+
+
+rules <- apriori(temp)
+```
 
 
 
