@@ -13,6 +13,7 @@ library(dplyr)
 library(stringr)
 library(knitr)
 library(treemap)
+library(arules)
 #library(gapminder)
 
 
@@ -251,12 +252,31 @@ for(i in 1:length(names(basket_frame))) {
   #basket_frame[i,] = 0
 ```
 
+```{r}
+load("basket_frame.Rda")
+```
 
 ```{r}
+load("basket_frame.Rda")
+basket_frame <- lapply(basket_frame, function(x) as.character(x))
+basket_frame <- as_tibble(basket_frame)
+#basket_frame <- as.factor(basket_frame)
 
-
-rules <- apriori(temp)
 ```
+
+
+
+```{r}
+rules <- apriori(basket_frame)
+```
+
+```{r}
+#rules <- apriori(mydata,parameter = list(minlen=2, maxlen=5,supp=.1, conf=.5))
+quality(rules)<-round(quality(rules),digits=3)
+rules.sorted <- filter(rules, lhs == 0)
+```
+
+
 
 
 
