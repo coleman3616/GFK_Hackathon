@@ -14,6 +14,7 @@ library(stringr)
 library(knitr)
 library(treemap)
 library(arules)
+library(stats)
 #library(gapminder)
 
 
@@ -257,13 +258,19 @@ load("basket_frame.Rda")
 ```
 
 ```{r}
-load("basket_frame.Rda")
+load("basket_frame_LABELS.Rda")
+basket_frame <- basket_frame[1:length(basket_frame)-1]
 basket_frame <- lapply(basket_frame, function(x) as.character(x))
 basket_frame <- as_tibble(basket_frame)
+
 #basket_frame <- as.factor(basket_frame)
 
 ```
 
+
+```{r}
+transactions <- read.transactions("Hackathon_Data_Maps.xlsx", format = "single", cols = c(1,3))
+```
 
 
 ```{r}
@@ -271,12 +278,44 @@ rules <- apriori(basket_frame)
 ```
 
 ```{r}
-#rules <- apriori(mydata,parameter = list(minlen=2, maxlen=5,supp=.1, conf=.5))
-quality(rules)<-round(quality(rules),digits=3)
-rules.sorted <- filter(rules, lhs == 0)
+rules <- apriori(basket_frame,parameter = list(minlen=2, maxlen=5,supp=.1, conf=.5))
+#quality(rules)<-round(quality(rules),digits=3)
+#rules.sorted <- filter(rules, lhs == 0)
 ```
 
 
 
+```{r}
+
+
+temp_UPC <- UPC_Cereal %>% filter(UPC == 3800000917)
+  UPC_Grouped_Daily <- temp_UPC %>%
+  group_by(date) %>%
+  summarise(sold_per_day = sum(qty)) 
+ 
+  UPC_Grouped_Daily %>%
+  ggplot(aes(y = sold_per_day, x = date)) +
+  geom_line(color = "lightblue", alpha = .9) +
+  geom_smooth(color = "blue") +
+  ggtitle(temp_UPC$Description[1])
+  
+  
+fftmodel <- UPC_Grouped_Daily %>%
+  ts()
+
+```
+```{r}
+brand_performance <- UPC_Cereal%>%
+  group_by(`Parent Brand`,date) %>%
+  summarise(total_products = sum(qty))
+
+brand_performance %>%
+ggplot(aes(y = total_products, x = date, color = `Parent Brand`)) +
+  geom_point() #+
+ # theme(legend.position="none")
+  
+
+
+```
 
 
