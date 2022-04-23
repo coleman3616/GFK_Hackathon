@@ -273,18 +273,6 @@ transactions <- read.transactions("UPC_Hack_Cereal2.csv", sep = ',', format = "s
 ```
 
 
-```{r}
-rules <- apriori(basket_frame)
-```
-
-
-
-```{r}
-#Confidence: only .5 confident that this transaction pattern exists
-rules <- apriori(transactions,parameter = list(minlen=2, maxlen=5,supp=.001, conf=.8))
-#quality(rules)<-round(quality(rules),digits=3)
-#rules.sorted <- filter(rules, lhs == 0)
-```
 
 
 

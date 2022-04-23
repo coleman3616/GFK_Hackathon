@@ -13,6 +13,7 @@ library(dplyr)
 library(stringr)
 library(knitr)
 library(treemap)
+library(arulesViz)
 ```
 
 
@@ -20,6 +21,9 @@ library(treemap)
 ```{r Data Import}
 UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
 Cereal_Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
+Cleaners_Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx", sheet = 2)
+UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
+
 ```
 
 ```{r Combine UPC with description}
@@ -27,28 +31,55 @@ UPC_Hack_Cereal2 <- UPC_Hack_Cereal2 %>%
   rename(UPC = "upc")  %>%
   left_join(y = .,x = Cereal_Hackathon_Data_Maps, by = "UPC") %>% 
   filter(!is.na(HHID))
+
+UPC_Hack_Cleaners2 <- UPC_Hack_Cleaners2 %>%
+  rename(UPC = "upc")  %>%
+  left_join(y = .,x = Cleaners_Hackathon_Data_Maps, by = "UPC") %>% 
+  filter(!is.na(HHID))
+
 ```
 
 
 ```{r Write CSV file}
-write.csv(UPC_Hack_Cereal2, "UPC_Hack_Cereal2_Desc.csv", row.names = FALSE)
+
+UPC_Hack_Cereal2_sample <-  sample_n(UPC_Hack_Cereal2, 1000)
+write.csv(UPC_Hack_Cereal2_sample, "UPC_Hack_Cereal2_Desc_sample.csv", row.names = FALSE)
+
+write.csv(UPC_Hack_Cleaners2, "UPC_Hack_Cleaners2_Desc.csv", row.names = FALSE)
 ```
 
 
 ```{r}
-transactions <- read.transactions("UPC_Hack_Cereal2_Desc.csv",
+transactions_cereal <- read.transactions("UPC_Hack_Cereal2_Desc_sample.csv",
                                   sep = ',',
                                   format = "single",
-                                  cols = c(2,6))
+                                  cols = c(6,2))
+transactions_cleaners <- read.transactions("UPC_Hack_Cleaners2_Desc.csv",
+                                  sep = ',',
+                                  format = "single",
+                                  cols = c(6,2))
+
 ```
 
 ```{r}
 
+
 #Confidence: only .5 confident that this transaction pattern exists
-rules <- apriori(transactions,parameter = list(minlen=2, maxlen=5,supp=.001, conf=.8))
+rules_cereal <- apriori(transactions_cereal,parameter = list(minlen=2, maxlen=4,supp=.001, conf=.5),control = list(verbose=FALSE))
+rules_cleaners <- apriori(transactions_cleaners,parameter = list(minlen=2, maxlen=4,supp=.001, conf=.5))#,control = list(verbose=FALSE))
 #quality(rules)<-round(quality(rules),digits=3)
 #rules.sorted <- filter(rules, lhs == 0)
 
+```
+```{r}
+inspect(rules_cleaners)
+```
+```{r}
+simple_rules_cleaners <- sort(rules_cleaners,by="lift")[1:20]
+plot(simple_rules_cleaners, method = "graph", engine = "htmlwidget")
+```
+```{r}
+plot(rules_cereal, method = "graph", engine = "htmlwidget")
 ```
 
 
