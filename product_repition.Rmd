@@ -269,7 +269,7 @@ basket_frame <- as_tibble(basket_frame)
 
 
 ```{r}
-transactions <- read.transactions("Hackathon_Data_Maps.xlsx", format = "single", cols = c(1,3))
+transactions <- read.transactions("UPC_Hack_Cereal2.csv", sep = ',', format = "single", cols = c(1,3))
 ```
 
 
@@ -277,8 +277,11 @@ transactions <- read.transactions("Hackathon_Data_Maps.xlsx", format = "single",
 rules <- apriori(basket_frame)
 ```
 
+
+
 ```{r}
-rules <- apriori(basket_frame,parameter = list(minlen=2, maxlen=5,supp=.1, conf=.5))
+#Confidence: only .5 confident that this transaction pattern exists
+rules <- apriori(transactions,parameter = list(minlen=2, maxlen=5,supp=.001, conf=.8))
 #quality(rules)<-round(quality(rules),digits=3)
 #rules.sorted <- filter(rules, lhs == 0)
 ```

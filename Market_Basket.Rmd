@@ -1,0 +1,55 @@
+---
+title: "Market_Basket"
+author: "Tye Leckinger"
+date: "4/22/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(tidyverse)
+library(caret)
+library(dplyr)
+library(stringr)
+library(knitr)
+library(treemap)
+```
+
+
+
+```{r Data Import}
+UPC_Hack_Cereal2 <- read_csv("UPC_Hack_Cereal2.csv")
+Cereal_Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
+```
+
+```{r Combine UPC with description}
+UPC_Hack_Cereal2 <- UPC_Hack_Cereal2 %>%
+  rename(UPC = "upc")  %>%
+  left_join(y = .,x = Cereal_Hackathon_Data_Maps, by = "UPC") %>% 
+  filter(!is.na(HHID))
+```
+
+
+```{r Write CSV file}
+write.csv(UPC_Hack_Cereal2, "UPC_Hack_Cereal2_Desc.csv", row.names = FALSE)
+```
+
+
+```{r}
+transactions <- read.transactions("UPC_Hack_Cereal2_Desc.csv",
+                                  sep = ',',
+                                  format = "single",
+                                  cols = c(2,6))
+```
+
+```{r}
+
+#Confidence: only .5 confident that this transaction pattern exists
+rules <- apriori(transactions,parameter = list(minlen=2, maxlen=5,supp=.001, conf=.8))
+#quality(rules)<-round(quality(rules),digits=3)
+#rules.sorted <- filter(rules, lhs == 0)
+
+```
+
+
+
