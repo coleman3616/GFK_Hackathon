@@ -33,6 +33,30 @@ UPC_Hack_Cleaners2 <- read_csv("UPC_Hack_Cleaners2.csv")
 Hackathon_Data_Maps <- read_excel("Hackathon_Data_Maps.xlsx")
 ```
 
+
+
+```{r}
+slides_theme <- function() {
+  
+       
+        #panel.background = element_blank(),
+        #panel.grid.major = element_line(color = "grey30", size = 0.2),
+        #panel.grid.minor = element_line(color = "grey30", size = 0.2),
+        #panel.grid.major = element_blank(),
+        #panel.grid.minor = element_blank(),
+        
+       # legend.background = element_blank(),
+       # axis.ticks = element_blank(),
+       # legend.key = element_blank(),
+      #  axis.text.x = element_blank(),
+      #  axis.ticks.x = element_blank())
+}
+ 
+```
+
+
+
+
 ```{r Month Function}
 numToMonth<- function(num) {
   factor(c("January", 
@@ -124,6 +148,8 @@ OVR <- OvR %>%
 
 OVR %>%
   ggplot(aes(y = amount, x = year, fill = Online)) +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   geom_bar(stat = "identity", position = "dodge") +
   ggtitle("Amount of transactions in store vs. online")
 
@@ -140,19 +166,22 @@ Summary_Basket_2019_samp <- Summary_Basket_2019_samp  %>%
   mutate(date = as.Date(str_c("20",date))) %>%
   mutate(year = str_c("20",format(date, "%y")) ,
          month = format(date, "%m") %>% as.integer() %>% numToMonth(),
-         day = format(date, "%d"))
+         day = format(date, "%d"),
+         Online = ifelse(Online == 1,TRUE,FALSE))
 
 Summary_Basket_2020_samp <- Summary_Basket_2020_samp %>%
   mutate(date = as.Date(str_c("20",date))) %>% 
   mutate(year = str_c("20",format(date, "%y")) ,
          month = format(date, "%m") %>% as.integer() %>% numToMonth(),
-         day = format(date, "%d"))
+         day = format(date, "%d"),
+         Online = ifelse(Online == 1,TRUE,FALSE))
 
 Summary_Basket_2021_samp <- Summary_Basket_2021_samp %>%
   mutate(date = as.Date(str_c("20",date))) %>%
   mutate(year = str_c("20",format(date, "%y")) ,
          month = format(date, "%m") %>% as.integer() %>% numToMonth(),
-         day = format(date, "%d"))
+         day = format(date, "%d"),
+         Online = ifelse(Online == 1,TRUE,FALSE))
 
 
 #All_Summary <- rbind(Summary_Basket_2019,Summary_Basket_2020) %>%
@@ -208,6 +237,8 @@ Summary_Basket_2021_samp <- Summary_Basket_2021_samp %>%
 Summary_Basket_2019_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = month)) +
   geom_point() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -217,6 +248,8 @@ Summary_Basket_2019_samp %>%
 Summary_Basket_2020_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = month)) +
   geom_point() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -226,6 +259,8 @@ Summary_Basket_2020_samp %>%
 Summary_Basket_2021_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = month)) +
   geom_point() + 
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -238,6 +273,8 @@ Summary_Basket_2021_samp %>%
 Summary_Basket_2019_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = month)) +
   geom_point() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank(),
          legend.position="none") +
@@ -248,6 +285,8 @@ Summary_Basket_2019_samp %>%
 Summary_Basket_2020_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = month)) +
   geom_point() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank(),
          legend.position="none") +
@@ -258,6 +297,8 @@ Summary_Basket_2020_samp %>%
 Summary_Basket_2021_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = month)) +
   geom_point() + 
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank(),
          legend.position="none") +
@@ -270,29 +311,36 @@ Summary_Basket_2021_samp %>%
 Summary_Basket_2019_online_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = Online,group = Online)) +
   geom_point() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
   ggtitle("Total spent in 2019 online and in store") +
-  ylab("Mean dollars spent per day")
+  ylab("Mean dollars spent per day") 
 
 Summary_Basket_2020_online_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = Online,group = Online)) +
   geom_point() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
   ggtitle("Total spent in 2020 online and in store") +
-  ylab("Mean dollars spent per day")
+  ylab("Mean dollars spent per day") 
 
 Summary_Basket_2021_online_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = Online,group = Online)) +
   geom_point() + 
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
-         axis.ticks.x = element_blank()) +
+  axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
   ggtitle("Total spent in 2021 online and in store") +
-  ylab("Mean dollars spent per day")
+  ylab("Mean dollars spent per day") #+ 
+ # scale_color_manual(values = c("#8FDBB5","#1F3ECA"))  
 
 
 ```
@@ -300,6 +348,8 @@ Summary_Basket_2021_online_samp %>%
 Summary_Basket_2019_online_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = Online,group = Online)) +
   geom_point() +
+   scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -309,6 +359,8 @@ Summary_Basket_2019_online_samp %>%
 Summary_Basket_2020_online_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = Online,group = Online)) +
   geom_point() +
+   scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -318,6 +370,8 @@ Summary_Basket_2020_online_samp %>%
 Summary_Basket_2021_online_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = Online,group = Online)) +
   geom_point() + 
+   scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -329,6 +383,8 @@ Summary_Basket_2021_online_samp %>%
 Summary_Basket_2019_online_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = Online,group = Online)) +
   geom_boxplot() +
+   scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -338,6 +394,8 @@ Summary_Basket_2019_online_samp %>%
 Summary_Basket_2020_online_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = Online,group = Online)) +
   geom_boxplot() +
+   scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -347,6 +405,8 @@ Summary_Basket_2020_online_samp %>%
 Summary_Basket_2021_online_samp %>%
   ggplot(aes(y = avg_spent, x = day,color = Online,group = Online)) +
   geom_boxplot() + 
+   scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank()) +
   facet_wrap(~month) +
@@ -359,6 +419,8 @@ Summary_Basket_2021_online_samp %>%
 Summary_Basket_2019_online_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = Online,group = Online)) +
   geom_boxplot() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank(),
          legend.position="none") +
@@ -369,6 +431,8 @@ Summary_Basket_2019_online_samp %>%
 Summary_Basket_2020_online_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = Online,group = Online)) +
   geom_boxplot() +
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank(),
          legend.position="none") +
@@ -379,6 +443,8 @@ Summary_Basket_2020_online_samp %>%
 Summary_Basket_2021_online_samp %>%
   ggplot(aes(y = avg_bought, x = day,color = Online,group = Online)) +
   geom_boxplot() + 
+  scale_fill_manual(values=1:16) + 
+  scale_color_manual(values=1:16) +
   theme (axis.text.x = element_blank(),
          axis.ticks.x = element_blank(),
          legend.position="none") +
