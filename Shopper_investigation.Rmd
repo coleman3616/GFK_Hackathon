@@ -1,0 +1,431 @@
+---
+title: "Shopper_Investigation"
+author: "Jonah Schnettler"
+date: "April 15, 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Imports and Libraries
+
+##Libraries
+```{r libraries}
+#install.packages("ggpubr")
+library(readxl)
+library(tidyverse)
+library(ggpubr)
+library(caret)
+library(dplyr)
+library(stringr)
+```
+*inlude librarys here. Commented section is example code for installing any missing packages.
+
+##Data Imports
+```{r import, include=FALSE}
+Shopper_Tabs1 <- read_excel("Shopper_Tabs_1.xlsx")
+Shopper_Tabs2 <- read_excel("Shopping_Tabs_2.xlsx")
+Shopper_Tabs3 <- read_excel("Shopper_Tabs_3.xlsx")
+```
+*Import the data sets for shopper_tabs. Refactoring names is necessary for this.
+
+#Clean/build workable data.
+
+## Remove empty rows.
+```{r remove_empty_rows}
+remove_empty_rows <- function(.source) {
+  empty_rows <- apply(.source, 1, function(.source) all(is.na(.source))) # Check each row for any rows that contain only na's.
+  cleaned <- .source[!empty_rows,] # Keep everything but the empty rows.
+  cleaned <- subset(cleaned, select = -c(2)) # Remove the percentage down column.
+  return(cleaned)
+}
+```
+*First step is to clear the empty rows after initial imports and then remove the percentage down column since it is constant for all data.
+
+##Look at a specific set of data.
+```{r get_data}
+get_data <- function(.data, key) {
+  found <- FALSE
+  key_pattern <- paste("Demographic.*", key) # Look for row containing 'Demographic' followed by the key string we are looking for
+  for(i in 1:nrow(.data)) { 
+    if (grepl(pattern=key_pattern, .data [i, 1])) { # Check if current row has key_pattern matched.
+      found <- TRUE # Set key pattern found and look for the end of this chunk.
+      j <- i+1 # Set begginning position of this chunk.
+      i <- i+1 # Skip next check since pattern found at this row.
+    }
+    if (grepl(pattern="Demographic.*", .data[i, 1]) && found) { # Check for next occurance of 'Demographic'
+      new_data <- .data[j:i-1, 1:ncol(.data)] # Create subset of data that only contains a single table from the original excel.
+      found <- FALSE
+    }
+  }
+  if (found) { # If key pattern found and no other occurance of 'Demographic' set i to end of .data
+    j <- j-1
+    new_data <- .data[j:nrow(.data), 1:ncol(.data)] # Create subset of data that only contains a single table from the original excel.
+    found <- FALSE
+  } 
+  if (!exists("new_data")) {
+    for (a in 1:nrow(.data)) {
+      if (grepl(pattern="Demographic.*", .data[a, 1])) { # Check for next occurance of 'Demographic'
+        new_data <- .data[1:a-1, 1:ncol(.data)] # Create subset of data that only contains a single table from the original excel.
+        break
+      }
+    }
+    names(new_data)[2] <- new_data[1,2]
+    names(new_data)[3:ncol(new_data)] <- new_data[2, 3:ncol(new_data)]
+    new_data <- new_data[3:nrow(new_data),]
+  } else {
+    names(new_data)[1] <- new_data[1,1]
+    names(new_data)[2] <- new_data[2,2]
+    names(new_data)[3:ncol(new_data)] <- new_data[3, 3:ncol(new_data)]
+    new_data <- new_data[4:nrow(new_data),]
+  }
+  new_data <- new_data[-c(3), ]
+  return(new_data)
+}
+```
+*Now we can look at the specific table by specifying a keyword to find said table. If failed, returns first table found in data passed; to overcome, give more specific key term for table.
+
+##get weighted and unweighted data.
+```{r get_weighted}
+get_weighted <- function(.data, weight) {
+  weighted_df <- as.data.frame(.data)
+  for (i in 3:nrow(.data)) {
+    weighted_df[i,1] <- as.data.frame(.data[i,1])
+    for (j in 2:ncol(.data)) {
+      weighted_df[1, j] <- as.data.frame(.data[1,j])
+      weighted_df[i, j] <- round(as.numeric(weighted_df[i, j]) %*% as.numeric(weighted_df[weight, j]), 0)
+    }
+  }
+  weighted_df <- weighted_df[-c(1,2),]
+  names(weighted_df)[1] <- "question"
+  return(weighted_df)
+}
+```
+*This function calculates the weighted and unweighted data. To select weight, pass integer of 1 for unweighted and 2 for weighted.
+
+## Pivot data.
+```{r pivot}
+pivot_data <- function(.data) {
+  .data <- .data %>%
+  pivot_longer(c('Male','Female','Other'), names_to = "Gender", values_to = "gender_amount") %>%
+  pivot_longer(c('Age - 15-19','Age - 20-29','Age - 30-39','Age - 40-49','Age - 50-59','Age - 60+'), names_to = "ages", values_to = "ages_amount") %>%
+  pivot_longer(c('Household Income - Low','Household Income - Medium-Low','Household Income - Medium-High','Household Income - High'), names_to = "incomes", values_to = "incomes_amount") %>%
+  pivot_longer(c('Education - High School Grad or Less','Education - College/Post-Grad'), names_to = "education", values_to = "education_amount") %>%
+  pivot_longer(c('Kids in Hhld Age 0-8','Kids in Hhld Age 9-19'), names_to = "kids", values_to = "kids_amount") %>%
+  pivot_longer(c('Employed - Not Employed','Employed - Employed Part-Time','Employed - Employed Full-Time'), names_to = "employed", values_to = "employed_amount") %>%
+  pivot_longer(c('Legal Drinking Age'), names_to = "alcoholic", values_to = "alcoholic_amount") %>%
+  pivot_longer(c('White','Black or African American','Asian','Native American/American Indian','Mixed race/ Multiracial','Other (TYPE IN RESPONSE)','Prefer not to answer / No answer'), names_to = "ethnicity", values_to = "ethnicity_amount") %>%
+  pivot_longer(c('Yes, of Spanish/Hispanic/Latino origin','No'), names_to = "hispanic", values_to = "hispanic_amount")
+  return(.data)
+}
+```
+*This function pivots all of the columns to be grouped.
+
+## Start here!
+```{r initialize data}
+#Clean excel imported data
+Shopper_Tabs1 <- remove_empty_rows(Shopper_Tabs1)
+Shopper_Tabs2 <- remove_empty_rows(Shopper_Tabs2)
+Shopper_Tabs3 <- remove_empty_rows(Shopper_Tabs3)
+
+# This section generates the individual tables for shopper_tabs1
+s1_past_six_months <- get_data(Shopper_Tabs1, "past 6 months")
+s1_mobile_devices <- get_data(Shopper_Tabs1, "Smartphones")
+s1_household_washing <- get_data(Shopper_Tabs1, "Household washing")
+s1_haircare <- get_data(Shopper_Tabs1, "Haircare")
+s1_skincare <- get_data(Shopper_Tabs1, "Skincare")
+s1_cosmetics <- get_data(Shopper_Tabs1, "Make-up, cosmetics")
+s1_packaged_food <- get_data(Shopper_Tabs1, "Packaged food")
+s1_toys <- get_data(Shopper_Tabs1, "Toys")
+s1_small_home_appliances <- get_data(Shopper_Tabs1, "Small home appliances")
+s1_fashion <- get_data(Shopper_Tabs1, "Clothing/fashion")
+s1_healthcare <- get_data(Shopper_Tabs1, "OTC healthcare")
+s1_major_home_appliances <- get_data(Shopper_Tabs1, "Major home appliances")
+s1_replacement_auto <- get_data(Shopper_Tabs1, "Replacement auto")
+s1_streaming <- get_data(Shopper_Tabs1, "Streaming")
+s1_wearables <- get_data(Shopper_Tabs1, "Wearables")
+s1_computing <- get_data(Shopper_Tabs1, "Computing")
+s1_home_furnishings <- get_data(Shopper_Tabs1, "furnishings")
+
+# This section generates the individual tables for shopper_tabs2
+s2_smartphones <- get_data(Shopper_Tabs2, "Smartphones")
+s2_household_washing <- get_data(Shopper_Tabs2, "Household washing")
+s2_haircare <- get_data(Shopper_Tabs2, "Haircare")
+s2_skincare <- get_data(Shopper_Tabs2, "Skincare")
+s2_cosmetics <- get_data(Shopper_Tabs2, "Make-up")
+s2_packaged_food <- get_data(Shopper_Tabs2, "Packaged food")
+s2_toys <- get_data(Shopper_Tabs2, "Toys")
+s2_small_home_appliances <- get_data(Shopper_Tabs2, "Small home appliances")
+s2_fashion <- get_data(Shopper_Tabs2, "Clothing")
+s2_major_home_appliances <- get_data(Shopper_Tabs2, "Major home appliances")
+s2_replacement_auto <- get_data(Shopper_Tabs2, "Replacement auto")
+s2_streaming <- get_data(Shopper_Tabs2, "Streaming")
+s2_wearables <- get_data(Shopper_Tabs2, "Wearables")
+s2_computing <- get_data(Shopper_Tabs2, "Computing")
+s2_furnishing <- get_data(Shopper_Tabs2, "Home furnishings")
+s2_in_store_factors <- get_data(Shopper_Tabs2, "FB_08a")
+s2_online_factors <- get_data(Shopper_Tabs2, "FB_08b")
+
+# This section generates the individual tables for shopper_tabs3
+s3_gsa_summary_top2 <- get_data(Shopper_Tabs3, "Summary Top 2 Box")
+s3_nbt_summary_hd_wc <- get_data(Shopper_Tabs3, "Have already done it and will likely continue")
+s3_sms_general <- get_data(Shopper_Tabs3, "FBS_1 - Social Media Shopping")
+s3_sms_why_not <- get_data(Shopper_Tabs3, "FBS_1a")
+s3_sms_attitudes_top2 <- get_data(Shopper_Tabs3, "FBS_2 - Social Media Shopping.*Top 2 Box")
+s3_sms_attitudes_bot2 <- get_data(Shopper_Tabs3, "FBS_2 - Social Media Shopping.*Bottom 2 Box")
+s3_sms_attitudes_fun <- get_data(Shopper_Tabs3, "Shopping on social media networks is fun")
+s3_sms_attitudes_uncomfortable <- get_data(Shopper_Tabs3, "I feel uncomfortable with the current amount of advertising I see on social media networks")
+s3_sms_attitudes_targeted <- get_data(Shopper_Tabs3, "On my social media networks I get targeted with the best products for me")
+s3_sms_attitudes_nfm <- get_data(Shopper_Tabs3, "Shopping on sicial media networks is not for someone like me")
+s3_sms_attitudes_conveniences <- get_data(Shopper_Tabs3, "networks is convenient")
+s3_nbt_summary_hd_wnc <- get_data(Shopper_Tabs3, "Have already done it and will not likely continue")
+s3_nbt_summary_hn_wn <- get_data(Shopper_Tabs3, "Have not done it and will not")
+s3_gsa_summary_bot2 <- get_data(Shopper_Tabs3, "Summary Bottom 2 Box")
+```
+*This gets the initial cleaned data for the shopper tab data and then generates the individual tibbles to be able to work with.
+
+## view all data and generated data
+```{r view_data}
+
+# Initial data after being cleaned
+#view(Shopper_Tabs1)
+#view(Shopper_Tabs2)
+#view(Shopper_Tabs3)
+
+# Check first, mid, last of shopper_tabs1
+#view(s1_past_six_months)
+#view(s1_mobile_devices)
+#view(s1_household_washing)
+#view(s1_haircare)
+#view(s1_skincare)
+#view(s1_cosmetics)
+#view(s1_packaged_food)
+#view(s1_toys)
+#view(s1_small_home_appliances)
+#view(s1_fashion)
+#view(s1_healthcare)
+#view(s1_major_home_appliances)
+#view(s1_replacement_auto)
+#view(s1_streaming)
+#view(s1_wearables)
+#view(s1_computing)
+#view(s1_home_furnishings)
+
+# Check first, mid, last of shopper_tabs2
+#view(s2_smartphones)
+#view(s2_household_washing)
+#view(s2_haircare)
+#view(s2_skincare)
+#view(s2_cosmetics)
+#view(s2_packaged_food)
+#view(s2_toys)
+#view(s2_small_home_appliances)
+#view(s2_fashion)
+#view(s2_major_home_appliances)
+#view(s2_replacement_auto)
+#view(s2_streaming)
+#view(s2_wearables)
+#view(s2_computing)
+#view(s2_furnishing)
+#view(s2_in_store_factors)
+#view(s2_online_factors)
+
+# Check first, mid, last of shopper_tabs3
+#view(s3_gsa_summary_top2)
+#view(s3_nbt_summary_hd_wc)
+#view(s3_sms_general)
+#view(s3_sms_why_not)
+#view(s3_sms_attitudes_top2)
+#view(s3_sms_attitudes_bot2)
+#view(s3_sms_attitudes_fun)
+#view(s3_sms_attitudes_uncomfortable)
+#view(s3_sms_attitudes_targeted)
+#view(s3_sms_attitudes_nfm)
+#view(s3_sms_attitudes_conveniences)
+#view(s3_nbt_summary_hd_wnc)
+#view(s3_nbt_summary_hn_wn)
+#view(s3_gsa_summary_bot2)
+
+```
+*Create views for any/all initialized data in this Rmd file.
+
+
+
+# Visualizations
+
+## BarGraph for agree questions
+```{r agree_bargraph}
+agree_bargraph <- function(data, demo_colm, demo_amt, title) {
+  data %>%
+    ggplot(aes(x=demo_colm, y=demo_amt, 
+             fill = demo_colm, 
+             color = demo_colm)) +
+    facet_wrap(~question) +
+    geom_bar(stat="identity", position=position_dodge()) +
+    # define colors
+    scale_fill_manual(values=1:7) +
+    scale_color_manual(values=1:7) +
+    # add text and define color
+    geom_text(aes(label=demo_amt), vjust=1.6, color="white", 
+            # define text position and size
+            position = position_dodge(0.9),  size=3.5) +     
+    theme_bw() +
+    theme(axis.text.x=element_blank(), axis.title.x = element_blank(), legend.title = element_blank()) +
+      ggtitle(title) + 
+      labs(y='Number of surveyees')
+}
+```
+
+#Initial_Investigation
+
+##Shopper_tabs1
+```{r investigate_shopper_tabs1}
+
+```
+
+##Shopper_tabs2
+```{r investigate_shopper_tabs2}
+
+```
+
+##Shopper_tabs3
+
+### Degree of Agree questions
+```{r fun comparison}
+#### Fun comparison ####
+# unweighted data
+s3_fun_unweighted <- get_weighted(s3_sms_attitudes_fun, 1) %>%
+  pivot_data(.)
+view(s3_fun_unweighted)
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$Gender, s3_fun_unweighted$gender_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$ages, s3_fun_unweighted$ages_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$incomes, s3_fun_unweighted$incomes_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$education, s3_fun_unweighted$education_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$kids, s3_fun_unweighted$kids_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$employed, s3_fun_unweighted$employed_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$alcoholic, s3_fun_unweighted$alcoholic_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$ethnicity, s3_fun_unweighted$ethnicity_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_unweighted, s3_fun_unweighted$hispanic, s3_fun_unweighted$hispanic_amount, "Shopping on social media networks is fun.")
+# weighted data
+s3_fun_weighted <- get_weighted(s3_sms_attitudes_fun, 2) %>%
+    pivot_data(.)
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$Gender, s3_fun_weighted$gender_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$ages, s3_fun_weighted$ages_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$incomes, s3_fun_weighted$incomes_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$education, s3_fun_weighted$education_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$kids, s3_fun_weighted$kids_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$employed, s3_fun_weighted$employed_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$alcoholic, s3_fun_weighted$alcoholic_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$ethnicity, s3_fun_weighted$ethnicity_amount, "Shopping on social media networks is fun.")
+agree_bargraph(s3_fun_weighted, s3_fun_weighted$hispanic, s3_fun_weighted$hispanic_amount, "Shopping on social media networks is fun.")
+```
+```{r uncomfy comparison}
+#### Uncomfortable comparison ####
+# unweighted data
+s3_uncomfy_unweighted <- get_weighted(s3_sms_attitudes_uncomfortable, 1) %>%
+    pivot_data(.)
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$Gender, s3_uncomfy_unweighted$gender_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$ages, s3_uncomfy_unweighted$ages_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$incomes, s3_uncomfy_unweighted$incomes_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$education, s3_uncomfy_unweighted$education_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$kids, s3_uncomfy_unweighted$kids_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$employed, s3_uncomfy_unweighted$employed_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$alcoholic, s3_uncomfy_unweighted$alcoholic_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$ethnicity, s3_uncomfy_unweighted$ethnicity_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_unweighted, s3_uncomfy_unweighted$hispanic, s3_uncomfy_unweighted$hispanic_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+# weighted data
+s3_uncomfy_weighted <- get_weighted(s3_sms_attitudes_uncomfortable, 2) %>%
+    pivot_data(.)
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$Gender, s3_uncomfy_weighted$gender_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$ages, s3_uncomfy_weighted$ages_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$incomes, s3_uncomfy_weighted$incomes_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$education, s3_uncomfy_weighted$education_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$kids, s3_uncomfy_weighted$kids_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$employed, s3_uncomfy_weighted$employed_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$alcoholic, s3_uncomfy_weighted$alcoholic_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$ethnicity, s3_uncomfy_weighted$ethnicity_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+agree_bargraph(s3_uncomfy_weighted, s3_uncomfy_weighted$hispanic, s3_uncomfy_weighted$hispanic_amount, "Feels uncomfortable with the current amount of advertising on social media.")
+```
+```{r targeted comparison}
+#### Targeted comparison ####
+# unweighted data
+s3_targeted_unweighted <- get_weighted(s3_sms_attitudes_targeted, 1) %>%
+    pivot_data(.)
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$Gender, s3_targeted_unweighted$gender_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$ages, s3_targeted_unweighted$ages_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$incomes, s3_targeted_unweighted$incomes_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$education, s3_targeted_unweighted$education_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$kids, s3_targeted_unweighted$kids_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$employed, s3_targeted_unweighted$employed_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$alcoholic, s3_targeted_unweighted$alcoholic_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$ethnicity, s3_targeted_unweighted$ethnicity_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_unweighted, s3_targeted_unweighted$hispanic, s3_targeted_unweighted$hispanic_amount, "Get's targeted with the best products for them.")
+# weighted data
+s3_targeted_weighted <- get_weighted(s3_sms_attitudes_targeted, 2) %>%
+    pivot_data(.)
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$Gender, s3_targeted_weighted$gender_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$ages, s3_targeted_weighted$ages_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$incomes, s3_targeted_weighted$incomes_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$education, s3_targeted_weighted$education_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$kids, s3_targeted_weighted$kids_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$employed, s3_targeted_weighted$employed_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$alcoholic, s3_targeted_weighted$alcoholic_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$ethnicity, s3_targeted_weighted$ethnicity_amount, "Get's targeted with the best products for them.")
+agree_bargraph(s3_targeted_weighted, s3_targeted_weighted$hispanic, s3_targeted_weighted$hispanic_amount, "Get's targeted with the best products for them.")
+```
+```{r not for me comparison}
+#### Not for me comparison ####
+# unweighted data
+s3_nfm_unweighted <- get_weighted(s3_sms_attitudes_nfm, 1) %>%
+    pivot_data(.)
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$Gender, s3_nfm_unweighted$gender_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$ages, s3_nfm_unweighted$ages_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$incomes, s3_nfm_unweighted$incomes_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$education, s3_nfm_unweighted$education_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$kids, s3_nfm_unweighted$kids_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$employed, s3_nfm_unweighted$employed_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$alcoholic, s3_nfm_unweighted$alcoholic_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$ethnicity, s3_nfm_unweighted$ethnicity_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_unweighted, s3_nfm_unweighted$hispanic, s3_nfm_unweighted$hispanic_amount, "Shopping on social media is not for them.")
+# weighted data
+s3_nfm_weighted <- get_weighted(s3_sms_attitudes_nfm, 2) %>%
+    pivot_data(.)
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$Gender, s3_nfm_weighted$gender_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$ages, s3_nfm_weighted$ages_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$incomes, s3_nfm_weighted$incomes_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$education, s3_nfm_weighted$education_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$kids, s3_nfm_weighted$kids_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$employed, s3_nfm_weighted$employed_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$alcoholic, s3_nfm_weighted$alcoholic_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$ethnicity, s3_nfm_weighted$ethnicity_amount, "Shopping on social media is not for them.")
+agree_bargraph(s3_nfm_weighted, s3_nfm_weighted$hispanic, s3_nfm_weighted$hispanic_amount, "Shopping on social media is not for them.")
+```
+```{r convenient comparison}
+#### conveneient comparison ####
+# unweighted data
+s3_easy_unweighted <- get_weighted(s3_sms_attitudes_conveniences, 1) %>%
+    pivot_data(.)
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$Gender, s3_easy_unweighted$gender_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$ages, s3_easy_unweighted$ages_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$incomes, s3_easy_unweighted$incomes_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$education, s3_easy_unweighted$education_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$kids, s3_easy_unweighted$kids_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$employed, s3_easy_unweighted$employed_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$alcoholic, s3_easy_unweighted$alcoholic_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$ethnicity, s3_easy_unweighted$ethnicity_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_unweighted, s3_easy_unweighted$hispanic, s3_easy_unweighted$hispanic_amount, "It's convenient and easy!")
+# weighted data
+s3_easy_weighted <- get_weighted(s3_sms_attitudes_conveniences, 2) %>%
+    pivot_data(.)
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$Gender, s3_easy_weighted$gender_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$ages, s3_easy_weighted$ages_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$incomes, s3_easy_weighted$incomes_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$education, s3_easy_weighted$education_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$kids, s3_easy_weighted$kids_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$employed, s3_easy_weighted$employed_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$alcoholic, s3_easy_weighted$alcoholic_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$ethnicity, s3_easy_weighted$ethnicity_amount, "It's convenient and easy!")
+agree_bargraph(s3_easy_weighted, s3_easy_weighted$hispanic, s3_easy_weighted$hispanic_amount, "It's convenient and easy!")
+```
